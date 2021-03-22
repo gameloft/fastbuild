@@ -284,12 +284,12 @@ bool CIncludeParser::ParseGCC_Preprocessed( const char * compilerOutput,
             ++pos;
             goto foundInclude;
         }
-        if ( strncmp( pos, "line ", 5 ) == 0 )
-        {
-            hasFlags = false;
-            pos += 5;
-            goto foundInclude;
-        }
+        // if ( strncmp( pos, "line ", 5 ) == 0 )
+        // {
+            // hasFlags = false;
+            // pos += 5;
+            // goto foundInclude;
+        // }
         continue; // some other directive we don't care about
 
     foundInclude:

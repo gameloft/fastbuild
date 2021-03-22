@@ -178,8 +178,12 @@ bool Node::DetermineNeedToBuild( const Dependencies & deps ) const
         {
             // on disk file doesn't match our file
             // (modified by some external process)
-            FLOG_BUILD_REASON( "Need to build '%s' (externally modified - stamp = %" PRIu64 ", disk = %" PRIu64 ")\n", GetName().Get(), m_Stamp, lastWriteTime );
-            return true;
+            //[GL] Add to don't re-trigger a compilation for the external modification of an intermediate file
+			if (m_Type != Node::OBJECT_NODE)
+			{
+				FLOG_BUILD_REASON( "Need to build '%s' (externally modified - stamp = %" PRIu64 ", disk = %" PRIu64 ")\n", GetName().Get(), m_Stamp, lastWriteTime );
+				return true;
+			}
         }
     }
 

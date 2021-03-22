@@ -65,6 +65,7 @@ public:
     bool DisplayDependencyDB( const Array< AString > & targets ) const;
     bool GenerateDotGraph( const Array< AString > & targets, const bool fullGraph ) const;
     bool GenerateCompilationDatabase( const Array< AString > & targets ) const;
+	void GetDataPath(AString & path) const; //[GL] Add to modify to relative path when Python is the compiler
 
     class EnvironmentVarAndHash
     {

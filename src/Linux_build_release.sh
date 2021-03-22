@@ -8,7 +8,7 @@ else
 	echo "Build Done"
 fi
 cd $PWD
-cp ../tmp/x64Linux-Release/Tools/FBuild/FBuildApp/fbuild ../Bin/Linux-x64/fbuild
+cp ../tmp/x64Linux-Release/Tools/FBuild/FBuild/fbuild ../Bin/Linux-x64/fbuild
 cp ../tmp/x64Linux-Release/Tools/FBuild/FBuildWorker/fbuildworker ../Bin/Linux-x64/fbuildworker
 
 if [ $? -ne 0 ]

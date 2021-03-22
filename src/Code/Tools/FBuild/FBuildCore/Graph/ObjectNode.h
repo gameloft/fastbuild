@@ -44,6 +44,8 @@ public:
         FLAG_CAN_BE_CACHED      =   0x01,
         FLAG_CAN_BE_DISTRIBUTED =   0x02,
         FLAG_USING_PCH          =   0x04,
+		//[GL] Add Handle Python as External Compiler
+		FLAG_PYTHON				=	0x08,
         FLAG_GCC                =   0x10,
         FLAG_MSVC               =   0x20,
         FLAG_CREATING_PCH       =   0x40,

@@ -35,6 +35,10 @@
 
 // Static Data
 //------------------------------------------------------------------------------
+#if defined(__WINDOWS__) //[GL] Add ansicolor output
+	//W: Mutex console
+	Mutex ColorConsoleScope::s_ColorMutex;
+#endif
 /*static*/ bool FLog::s_ShowVerbose = false;
 /*static*/ bool FLog::s_ShowBuildReason = false;
 /*static*/ bool FLog::s_ShowErrors = true;
@@ -152,7 +156,10 @@ static FileStream * g_MonitorFileStream = nullptr;
     va_start(args, formatString);
     buffer.VFormat( formatString, args );
     va_end( args );
-
+	#if defined(__WINDOWS__) //[GL] Add ansicolor output
+		//W: Color red for Errors
+		ColorConsoleScope coloroutput(DARKRED_C);
+	#endif
     OutputInternal( "Error:", buffer.Get() );
 }
 

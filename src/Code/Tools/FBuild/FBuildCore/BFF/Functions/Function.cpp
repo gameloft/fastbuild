@@ -1244,7 +1244,7 @@ bool Function::PopulateArrayOfStrings( NodeGraph & nodeGraph, const BFFToken * i
     // Arrays must not contain empty strings
     for ( const AString& string : strings )
     {
-        if ( string.IsEmpty() == true )
+        if ( string.IsEmpty() == true && required) //[GL] Add to fix for empty optional value
         {
             Error::Error_1004_EmptyStringPropertyNotAllowed( iter, this, property.GetName() ); // TODO:B A specific error for empty string in array?
             return false;

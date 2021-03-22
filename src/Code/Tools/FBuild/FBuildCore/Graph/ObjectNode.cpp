@@ -65,7 +65,7 @@ REFLECT_NODE_BEGIN( ObjectNode, Node, MetaNone() )
     REFLECT( m_Preprocessor,                        "Preprocessor",                     MetaOptional() + MetaFile() + MetaAllowNonFile())
     REFLECT( m_PreprocessorOptions,                 "PreprocessorOptions",              MetaOptional() )
 
-    REFLECT_ARRAY( m_PreBuildDependencyNames,       "PreBuildDependencies",             MetaOptional() + MetaFile() + MetaAllowNonFile() )
+    REFLECT_ARRAY( m_PreBuildDependencyNames,       "PreBuildDependencies",             MetaOptional() + MetaAllowNonFile() )//[GL] Add to fix A9 can not strip so
 
     // Internal State
     REFLECT( m_PrecompiledHeader,                   "PrecompiledHeader",                MetaHidden() )
@@ -488,8 +488,9 @@ Node::BuildResult ObjectNode::DoBuildWithPreProcessor( Job * job, bool useDeopti
 
     // can we do the rest of the work remotely?
     const bool canDistribute = useSimpleDist || ( GetFlag( FLAG_CAN_BE_DISTRIBUTED ) && m_AllowDistribution && FBuild::Get().GetOptions().m_AllowDistributed );
-    const bool belowMemoryLimit = ( ( Job::GetTotalLocalDataMemoryUsage() / MEGABYTE ) < FBuild::Get().GetSettings()->GetDistributableJobMemoryLimitMiB() );
-    if ( canDistribute && belowMemoryLimit )
+    //[GL] Add to fix Line Limit Exceeded
+	/*const bool belowMemoryLimit = ( ( Job::GetTotalLocalDataMemoryUsage() / MEGABYTE ) < FBuild::Get().GetSettings()->GetDistributableJobMemoryLimitMiB() );*/
+    if ( canDistribute  )
     {
         // compress job data
         Compressor c;
@@ -907,6 +908,8 @@ bool ObjectNode::ProcessIncludesWithPreProcessor( Job * job )
         case CompilerNode::CompilerFamily::VBCC:            flags |= FLAG_VBCC;             break;
         case CompilerNode::CompilerFamily::ORBIS_WAVE_PSSLC:flags |= FLAG_ORBIS_WAVE_PSSLC; break;
         case CompilerNode::CompilerFamily::CSHARP:          ASSERT( false );                break; // Guarded in ObjectListNode::Initialize
+		//[GL] Add Handle Python as External Compiler
+		case CompilerNode::CompilerFamily::PYTHON:          flags |= FLAG_PYTHON;      		break;
     }
 
     // Source mappings are not currently forwarded so can only compiled locally
@@ -1051,9 +1054,20 @@ bool ObjectNode::ProcessIncludesWithPreProcessor( Job * job )
             }
         }
 
-        // all objects can be cached with GCC/SNC/Clang (including PCH files)
-        flags |= ObjectNode::FLAG_CAN_BE_CACHED;
-    }
+        //[GL] Add to don't cache PCH files when compiling with clang
+		bool isClang = flags & ( ObjectNode::FLAG_CLANG );
+        bool isCreatingPCH =  flags & (ObjectNode::FLAG_CREATING_PCH);
+       
+        if (isCreatingPCH && isClang)
+        { 
+        	//it's clearer to write the condition like this 
+        	//if we are creating the pch with clang ...dont cache it !
+        }
+        else
+        {
+        	flags |= ObjectNode::FLAG_CAN_BE_CACHED;
+        }
+	}
 
     // CUDA Compiler
     if ( flags & ObjectNode::FLAG_CUDA_NVCC )
@@ -1255,7 +1269,22 @@ const AString & ObjectNode::GetCacheName( Job * job ) const
             args += sourceMapping;
         }
 
-        commandLineKey = xxHash::Calc32( args.GetRawArgs().Get(), args.GetRawArgs().GetLength() );
+        //[GL] Add to modify to relative path when Python is the compiler
+		if (GetFlag(FLAG_PYTHON))
+		{
+			AString data_path;
+			FBuild::Get().GetDataPath(data_path);
+			AString param(args.GetRawArgs().Get());
+			if (!data_path.IsEmpty())
+			{
+				param.Replace(data_path.Get(), "");
+			}
+			commandLineKey = xxHash::Calc32(param.Get(), param.GetLength());
+		}
+		else
+		{
+			commandLineKey = xxHash::Calc32( args.GetRawArgs().Get(), args.GetRawArgs().GetLength() );
+		}
     }
     ASSERT( commandLineKey );
 
@@ -1382,7 +1411,11 @@ bool ObjectNode::RetrieveFromCache( Job * job )
             {
                 output.AppendFormat( " - Cache Hit: %u ms (Retrieve: %u ms - Decompress: %u ms) (Compressed: %zu - Uncompressed: %zu) '%s'\n", uint32_t( t.GetElapsedMS() ), retrieveTime, stopDecompress - startDecompress, cacheDataSize, dataSize, cacheFileName.Get() );
             }
-            FLOG_OUTPUT( output );
+            #if defined(__WINDOWS__)
+        		//[GL] Add ansicolor output
+				ColorConsoleScope gray(GRAY_C);
+			#endif
+			FLOG_OUTPUT( output );
         }
 
         SetStatFlag( Node::STATS_CACHE_HIT );
@@ -1788,7 +1821,9 @@ bool ObjectNode::BuildArgs( const Job * job, Args & fullArgs, Pass pass, bool us
                     continue; // skip this token in both cases
                 }
             }
-            if ( isGCC || isClang )
+            //[GL] Add to fix issue using sysroot sdk on Mac
+            #if defined( __WINDOWS__ ) || defined ( __LINUX__ )
+			if ( isGCC || isClang )
             {
                 // Remove isysroot, which may not exist on a distributed system, and
                 // should only be used for include paths, which have already been
@@ -1798,6 +1833,7 @@ bool ObjectNode::BuildArgs( const Job * job, Args & fullArgs, Pass pass, bool us
                     continue; // skip this token in both cases
                 }
             }
+			#endif
             if ( isGCC || isClang || isVBCC || isOrbisWavePsslc )
             {
                 // Remove forced includes so they aren't forced twice
@@ -2670,8 +2706,11 @@ bool ObjectNode::CompileHelper::SpawnCompiler( Job * job,
     // General process failures
     #if defined( __WINDOWS__ )
         // If remote PC is shutdown by user, compiler can be terminated
-        if ( ( (uint32_t)result == 0x40010004 ) || // DBG_TERMINATE_PROCESS
-             ( (uint32_t)result == 0xC0000142 ) )  // STATUS_DLL_INIT_FAILED - Occurs if remote PC is stuck on force reboot dialog during shutdown
+        //[GL] Add to catch some errors from interrupt process
+		if ( ( (uint32_t)result == 0x40010004 ) || // DBG_TERMINATE_PROCESS
+             ( (uint32_t)result == 0xC0000142 ) || // STATUS_DLL_INIT_FAILED - Occurs if remote PC is stuck on force reboot dialog during shutdown
+			 ( (uint32_t)result == 0xc000013a ) ||  // STATUS_CONTROL_C_EXIT - The application terminated as a result of a CTRL+C.
+			 ( (uint32_t)result == 0x80000005) ) // STATUS_BUFFER_OVERFLOW - The data was too large to fit into the specified buffer.
         {
             job->OnSystemError(); // task will be retried on another worker
             return;
@@ -2799,6 +2838,17 @@ bool ObjectNode::CompileHelper::SpawnCompiler( Job * job,
         // When gcc fails due to low disk space
         // TODO:C Should we check for localized msg?
         if ( stdErr.Find( "No space left on device" ) )
+        {
+            job->OnSystemError();
+            return;
+        }
+    }
+	
+	//[GL] Add Handle Python as External Compiler
+	if ( objectNode->GetFlag( ObjectNode::FLAG_PYTHON ) )
+	{
+		if ( ( (uint32_t)result == 0xC0000135 ) ||
+			 ( (uint32_t)result == 0x1 ) )
         {
             job->OnSystemError();
             return;

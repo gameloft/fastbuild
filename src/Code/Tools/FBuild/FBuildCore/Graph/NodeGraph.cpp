@@ -104,8 +104,12 @@ NodeGraph::~NodeGraph()
     NodeGraph * oldNG = FNEW( NodeGraph );
     LoadResult res = oldNG->Load( nodeGraphDBFile );
 
-    // Tests can force us to do a migration even if the DB didn't change
-    if ( forceMigration )
+    
+    if (FBuild::Get().GetOptions().m_ForceCleanBuild) //[GL] Add to load OK_BFF_NEEDS_REPARSING if m_ForceCleanBuild
+	{
+		res = LoadResult::OK_BFF_NEEDS_REPARSING;
+	}
+	else if ( forceMigration ) // Tests can force us to do a migration even if the DB didn't change
     {
         // If migration can't be forced, then the test won't function as expected
         // so we want to catch that failure.

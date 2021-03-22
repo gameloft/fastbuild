@@ -39,6 +39,7 @@
 #include "Core/Strings/AStackString.h"
 #include "Core/Tracing/Tracing.h"
 #include "Core/Process/Process.h"
+#include <memory.h>  //[GL] Add to fix fatal error: use of undeclared identifier 'memset' on MACOS
 
 #include <stdio.h>
 #include <time.h>
@@ -175,7 +176,8 @@ bool FBuild::Initialize( const char * nodeGraphDBFile )
 
     SmallBlockAllocator::SetSingleThreadedMode( false );
 
-    if ( m_DependencyGraph == nullptr )
+    m_JobQueue = FNEW(JobQueue(m_Options.m_NumWorkerThreads)); //[GL] Add to fix A9 can not strip so
+	if ( m_DependencyGraph == nullptr )
     {
         return false;
     }
@@ -288,7 +290,13 @@ bool FBuild::Build( const Array< AString > & targets )
     }
     proxy.m_StaticDependencies = deps;
 
-    // build all targets in one sweep
+    if (!m_JobQueue) //[GL] Add to fix A9 can not strip so
+	{
+		// create worker threads
+		m_JobQueue = FNEW(JobQueue(m_Options.m_NumWorkerThreads));
+	}
+	
+	// build all targets in one sweep
     const bool result = Build( &proxy );
 
     // output per-target results
@@ -379,8 +387,11 @@ bool FBuild::Build( Node * nodeToBuild )
     AtomicStoreRelaxed( &s_StopBuild, false ); // allow multiple runs in same process
     AtomicStoreRelaxed( &s_AbortBuild, false ); // allow multiple runs in same process
 
-    // create worker threads
-    m_JobQueue = FNEW( JobQueue( m_Options.m_NumWorkerThreads ) );
+    if (!m_JobQueue) //[GL] Add to fix A9 can not strip so
+	{
+		// create worker threads
+		m_JobQueue = FNEW( JobQueue( m_Options.m_NumWorkerThreads ) );
+	}
 
     // create the connection management system if needed
     // (must be after JobQueue is created)
@@ -716,6 +727,15 @@ void FBuild::UpdateBuildStatus( const Node * node )
 /*static*/ const char * FBuild::GetDefaultBFFFileName()
 {
     return "fbuild.bff";
+}
+
+// GetDataPath
+//[GL] Add to modify to relative path when Python is the compiler
+//------------------------------------------------------------------------------
+void FBuild::GetDataPath(AString & path) const
+{
+	const SettingsNode * settings = m_DependencyGraph->GetSettings();
+	path = settings->GetDataPath();
 }
 
 // DisplayTargetList

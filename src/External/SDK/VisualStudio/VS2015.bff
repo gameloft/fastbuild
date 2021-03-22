@@ -7,7 +7,7 @@
 //------------------------------------------------------------------------------
 Compiler( 'Compiler-VS2015-x64' )
 {
-    .Root       = '$VS2015_BasePath$/VC/bin/amd64'
+    .Root       = 'C:\Program Files (x86)\Microsoft Visual Studio 14.0'
     .Executable = '$Root$/cl.exe'
     .ExtraFiles = { '$Root$/c1.dll'
                     '$Root$/c1xx.dll',

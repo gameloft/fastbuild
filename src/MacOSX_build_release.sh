@@ -8,10 +8,10 @@ else
 	echo "Build Done"
 fi
 cd $PWD
-cp ../tmp/x64OSX-Release/Tools/FBuild/FBuildApp/FBuild ../Bin/MacOSX-x64/FBuild
+cp ../tmp/x64OSX-Release/Tools/FBuild/FBuild/FBuild ../Bin/MacOSX-x64/FBuild
 cp ../tmp/x64OSX-Release/Tools/FBuild/FBuildWorker/FBuildWorker ../Bin/MacOSX-x64/FBuildWorker
 
-mv ../tmp/x64OSX-Release/Tools/FBuild/FBuildApp/FBuild ../../bin/FBuild
+mv ../tmp/x64OSX-Release/Tools/FBuild/FBuild/FBuild ../../bin/FBuild
 mv ../tmp/x64OSX-Release/Tools/FBuild/FBuildWorker/FBuildWorker ../../bin/FBuildWorker
 if [ $? -ne 0 ]
 then 
