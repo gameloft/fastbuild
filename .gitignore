@@ -1,0 +1,72 @@
+# FASTBuild
+*.fdb
+*.log
+*.opensdf
+*.pdb
+*.sdf
+*.suo
+*.user
+*.vcxproj
+*.vcxproj.filters
+src/tmp/
+src/ftmp/
+profile.json
+
+# Temp files
+*.bak
+
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Folder config file
+Desktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# SDKs
+src/External/SDK/Clang/Windows/3.4/
+src/External/SDK/Clang/Windows/3.6/
+src/External/SDK/Clang/Windows/3.7.1/
+src/External/SDK/Clang/Windows/5.0.1/
+src/External/SDK/Clang/Windows/6.0.0/
+src/External/SDK/Clang/Windows/7.0.1/
+src/External/SDK/Clang/Windows/8.0.0/
+src/External/SDK/Clang/Windows/9.0.0/
+src/External/SDK/CUDA_6.5.14/
+src/External/SDK/other/
+src/External/SDK/VisualStudio/2013/
+src/External/SDK/VisualStudio/2015/
+src/External/SDK/VisualStudio/2017/
+src/External/SDK/VisualStudio/2019/
+src/External/SDK/Windows/8.1/
+src/External/SDK/Windows/10/
+
+# Windows shortcuts
+*.lnk
+
+# =========================
+# Operating System Files
+# =========================
+
+# OSX
+# =========================
+
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Files that might appear on external disk
+.Spotlight-V100
+.Trashes
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk

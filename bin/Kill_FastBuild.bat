@@ -1,0 +1,1 @@
+START Taskkill /f /im FBuild.exe

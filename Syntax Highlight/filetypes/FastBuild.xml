@@ -1,0 +1,21 @@
+<filetype binary="false" description="Fastbuild Highlight" name="FastBuild">
+  <highlighting>
+    <options>
+      <option name="LINE_COMMENT" value="//" />
+      <option name="COMMENT_START" value="" />
+      <option name="COMMENT_END" value="" />
+      <option name="HEX_PREFIX" value="" />
+      <option name="NUM_POSTFIXES" value="" />
+      <option name="HAS_BRACES" value="true" />
+      <option name="HAS_BRACKETS" value="true" />
+      <option name="HAS_PARENS" value="true" />
+    </options>
+    <keywords keywords="Alias;CSAssembly;Compiler;Copy;CopyDir;DLL;Exec;Executable;ForEach;Library;ObjectList;Print;RemoveDir;Settings;Test;Unity;Using;VCXProject;XCodeProject" ignore_case="false" />
+    <keywords2 keywords="AdditionalOptions;AllowCaching;AllowDistribution;ApplicationEnvironment;AssemblySearchPath;AumidOverride;CachePath;Compiler;CompilerForceUsing;CompilerInputExcludePath;CompilerInputExcludedFiles;CompilerInputFiles;CompilerInputPath;CompilerInputPathRecurse;CompilerInputPattern;CompilerInputUnity;CompilerOptions;CompilerOutput;CompilerOutputExtension;CompilerOutputPath;CompilerOutputPrefix;CompilerReferences;DebuggerFlavor;DefaultLanguage;Dest;Environment;ExecArguments;ExecExecutable;ExecInput;ExecOutput;ExecReturnCode;ExecUseStdOutAsOutput;ExecWorkingDir;Executable;ExtraFiles;FileType;ForcedIncludes;ForcedUsingAssemblies;IncludeSearchPath;IntermediateDirectory;LayoutDir;LayoutExtensionFilter;Librarian;LibrarianAdditionalInputs;LibrarianOptions;LibrarianOutput;Libraries;Linker;LinkerAssemblyResources;LinkerLinkObjects;LinkerOptions;LinkerOutput;LinkerStampExe;LinkerStampExeArgs;LocalDebuggerCommand;LocalDebuggerCommandArguments;LocalDebuggerEnvironment;LocalDebuggerWorkingDirectory;Output;OutputDirectory;PCHInputFile;PCHOptions;PCHOutputFile;Pattern;PlatformToolset;PreBuildDependencies;Preprocessor;PreprocessorDefinitions;PreprocessorOptions;ProjectAllowedFileExtensions;ProjectBasePath;ProjectBuildCommand;ProjectCleanCommand;ProjectConfigs;ProjectFileTypes;ProjectFiles;ProjectFilesToExclude;ProjectGuid;ProjectInputPaths;ProjectInputPathsExcluded;ProjectOutput;ProjectProjectReferences;ProjectRebuildCommand;ProjectReferences;RemoveExcludePaths;RemovePaths;RemovePathsRecurse;RemovePatterns;RootNamespace;SolutionBuildProject;SolutionConfigs;SolutionFolders;SolutionOutput;SolutionProjects;SolutionVisualStudioVersion;Source;SourceExcludePaths;SourcePathsPattern;SourcePathsRecurse;Targets;TestArguments;TestExecutable;TestOutput;TestWorkingDir;UnityInputExcludePath;UnityInputExcludePattern;UnityInputExcludedFiles;UnityInputFiles;UnityInputIsolateWritableFiles;UnityInputObjectLists;UnityInputPath;UnityInputPathRecurse;UnityInputPattern;UnityNumFiles;UnityOutputPath;UnityOutputPattern;UnityPCH;Workers;X360DebuggerCommand;XCodeBuildToolArgs;XCodeBuildToolPath;XCodeBuildWorkingDir;XCodeOrganizationName" />
+    <keywords3 keywords="$;%1;%2;%3" />
+    <keywords4 keywords="#;+;=;define;endif;if;import;in;include;once;undef" />
+  </highlighting>
+  <extensionMap>
+    <mapping ext="bff" />
+  </extensionMap>
+</filetype>
