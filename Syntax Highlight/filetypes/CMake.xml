@@ -1,0 +1,20 @@
+<filetype binary="false" description="CMake" name="CMake">
+  <highlighting>
+    <options>
+      <option name="LINE_COMMENT" value="#" />
+      <option name="COMMENT_START" value="" />
+      <option name="COMMENT_END" value="" />
+      <option name="HEX_PREFIX" value="" />
+      <option name="NUM_POSTFIXES" value="" />
+      <option name="HAS_BRACES" value="true" />
+      <option name="HAS_BRACKETS" value="true" />
+    </options>
+    <keywords keywords="add_library;cmake_minimum_required;cpp;set;target_compile_definitions;target_compile_options;target_include_directories;target_link_libraries" ignore_case="false" />
+    <keywords2 keywords="c;endif;if" />
+    <keywords3 keywords="${ExternalsPath};${ProjectPath};ExternalsPath;ProjectPath" />
+    <keywords4 keywords="/;OFF" />
+  </highlighting>
+  <extensionMap>
+    <mapping pattern="CMakeLists.txt" />
+  </extensionMap>
+</filetype>
