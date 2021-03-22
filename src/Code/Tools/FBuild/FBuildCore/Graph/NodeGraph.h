@@ -58,7 +58,7 @@ public:
     }
     inline ~NodeGraphHeader() = default;
 
-    enum : uint8_t { NODE_GRAPH_CURRENT_VERSION = 150 };
+    enum : uint8_t { NODE_GRAPH_CURRENT_VERSION = 155 };
 
     bool IsValid() const
     {
@@ -206,7 +206,7 @@ private:
         uint64_t    m_TimeStamp;
         uint64_t    m_DataHash;
     };
-	Array< UsedFile >	m_UsedFiles;
+    Array< UsedFile > m_UsedFiles;
 
     const SettingsNode * m_Settings;
 
