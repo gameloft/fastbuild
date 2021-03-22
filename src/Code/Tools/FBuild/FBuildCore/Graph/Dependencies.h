@@ -28,7 +28,6 @@ public:
         , m_IsWeak( isWeak )
     {}
 
-
     inline Node * GetNode() const { return m_Node; }
     inline uint64_t GetNodeStamp() const { return m_NodeStamp; }
     inline bool IsWeak() const { return m_IsWeak; }

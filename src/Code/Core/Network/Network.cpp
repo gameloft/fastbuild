@@ -136,7 +136,6 @@
     PROFILE_SET_THREAD_NAME( "DNSResolution" )
 
 	NetworkStartupHelper nsh; //[GL] Add to fix crash when using distributed
-
     uint32_t ip( 0 );
     {
         PROFILE_FUNCTION

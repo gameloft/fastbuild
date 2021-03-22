@@ -29,6 +29,7 @@ public:
 	const AString &                     GetDataPath() const; //[GL] Add to modify to relative path when Python is the compiler
     const AString &                     GetCachePathMountPoint() const;
     const AString &                     GetCachePluginDLL() const;
+    const AString &                     GetCachePluginDLLConfig() const;
     inline const Array< AString > &     GetWorkerList() const { return m_Workers; }
     uint32_t                            GetWorkerConnectionLimit() const { return m_WorkerConnectionLimit; }
     uint32_t                            GetDistributableJobMemoryLimitMiB() const { return m_DistributableJobMemoryLimitMiB; }
@@ -48,6 +49,7 @@ private:
 	AString				m_DataPath;	//[GL] Add to modify to relative path when Python is the compiler
     AString             m_CachePathMountPoint;
     AString             m_CachePluginDLL;
+    AString             m_CachePluginDLLConfig;
     Array< AString  >   m_Workers;
     uint32_t            m_WorkerConnectionLimit;
     uint32_t            m_DistributableJobMemoryLimitMiB;

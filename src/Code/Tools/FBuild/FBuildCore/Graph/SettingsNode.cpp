@@ -31,6 +31,7 @@ REFLECT_NODE_BEGIN( SettingsNode, Node, MetaNone() )
 	REFLECT(		m_DataPath,					"DataPath",					MetaOptional() ) //[GL] Add to modify to relative path when Python is the compiler
     REFLECT(        m_CachePathMountPoint,      "CachePathMountPoint",      MetaOptional() )
     REFLECT(        m_CachePluginDLL,           "CachePluginDLL",           MetaOptional() )
+    REFLECT(        m_CachePluginDLLConfig,     "CachePluginDLLConfig",     MetaOptional() )
     REFLECT_ARRAY(  m_Workers,                  "Workers",                  MetaOptional() )
     REFLECT(        m_WorkerConnectionLimit,    "WorkerConnectionLimit",    MetaOptional() )
     REFLECT(        m_DistributableJobMemoryLimitMiB, "DistributableJobMemoryLimitMiB", MetaOptional() + MetaRange( DIST_MEMORY_LIMIT_MIN, DIST_MEMORY_LIMIT_MAX ) )
@@ -116,6 +117,13 @@ const AString & SettingsNode::GetDataPath() const //[GL] Add to modify to relati
 const AString & SettingsNode::GetCachePluginDLL() const
 {
     return m_CachePluginDLL;
+}
+
+// GetCachePluginDLLConfig
+//------------------------------------------------------------------------------
+const AString & SettingsNode::GetCachePluginDLLConfig() const
+{
+    return m_CachePluginDLLConfig;
 }
 
 // ProcessEnvironment
