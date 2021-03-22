@@ -85,14 +85,12 @@ bool IsDebuggerAttached()
         const uint32_t BUFFER_SIZE( 4096 );
         char buffer[ BUFFER_SIZE ];
         #if defined( __APPLE__ ) || defined( __LINUX__ )
-            sprintf( buffer,"\n-------- ASSERTION FAILED --------\n%s(%i): Assert: %s\n-----^^^ ASSERTION FAILED ^^^-----\n",
-            file, line, message );
+            sprintf( buffer,
         #else
-            sprintf_s( buffer, BUFFER_SIZE,"\n-------- ASSERTION FAILED --------\n%s(%i): Assert: %s\n-----^^^ ASSERTION FAILED ^^^-----\n",
-            file, line, message );
+            sprintf_s( buffer, BUFFER_SIZE,
         #endif
-            // "\n-------- ASSERTION FAILED --------\n%s(%i): Assert: %s\n-----^^^ ASSERTION FAILED ^^^-----\n",
-            // file, line, message );
+            "\n-------- ASSERTION FAILED --------\n%s(%i): Assert: %s\n-----^^^ ASSERTION FAILED ^^^-----\n",
+            file, line, message );
 
         puts( buffer );
         fflush( stdout );

@@ -14,6 +14,7 @@
 #endif
 #if defined( __APPLE__ ) || defined( __LINUX__ )
     #include <errno.h>
+    #include <limits.h>
     #include <pthread.h>
     #include <unistd.h>
 #endif
@@ -106,7 +107,7 @@ public:
 //------------------------------------------------------------------------------
 /*static*/ void Thread::Sleep( uint32_t ms )
 {
-    PROFILE_FUNCTION
+    PROFILE_FUNCTION;
 
     #if defined( WIN32 ) || defined( WIN64 )
         ::Sleep( ms );
@@ -143,6 +144,11 @@ public:
             // To account for that double the requested stack size for the thread.
             stackSize *= 2;
         #endif
+        // Necessary on Aarch64, where it's 131072 in my tests. Sometimes we ask for 65536.
+        if ( stackSize < PTHREAD_STACK_MIN )
+        {
+            stackSize = PTHREAD_STACK_MIN;
+        }
         pthread_t h( 0 );
         pthread_attr_t threadAttr;
         VERIFY( pthread_attr_init( &threadAttr ) == 0 );

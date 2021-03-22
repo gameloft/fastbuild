@@ -6,52 +6,7 @@
 //------------------------------------------------------------------------------
 #include "Core/Env/MSVCStaticAnalysis.h"
 #include "Core/Strings/AStackString.h"
-//[GL] Add ansicolor output
-#include "Core/Process/Mutex.h"
 
-#if defined(__WINDOWS__)
-#include <windows.h>
-
-//Color List
-#define BLACK_C         0
-#define DARKBLUE_C      FOREGROUND_BLUE
-#define DARKGREEN_C     FOREGROUND_GREEN
-#define DARKCYAN_C      FOREGROUND_GREEN | FOREGROUND_BLUE
-#define DARKRED_C       FOREGROUND_RED
-#define DARKMAGENTA_C   FOREGROUND_RED | FOREGROUND_BLUE
-#define DARKYELLOW_C    FOREGROUND_RED | FOREGROUND_GREEN
-#define DARKGRAY_C      FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE
-
-#define GRAY_C          FOREGROUND_INTENSITY
-#define BLUE_C          FOREGROUND_INTENSITY | FOREGROUND_BLUE
-#define GREEN_C         FOREGROUND_INTENSITY | FOREGROUND_GREEN
-#define CYAN_C          FOREGROUND_INTENSITY | FOREGROUND_GREEN | FOREGROUND_BLUE
-#define RED_C           FOREGROUND_INTENSITY | FOREGROUND_RED
-#define MAGENTA_C       FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_BLUE
-#define YELLOW_C        FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN
-#define WHITE_C         FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE
-
-
-//Color Scope console Class
-class ColorConsoleScope 
-{
-   	CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
-	public:
-	static Mutex s_ColorMutex;
-   ~ColorConsoleScope()
-	{
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), consoleInfo.wAttributes);
-		s_ColorMutex.Unlock();
-   	}
-    
-    ColorConsoleScope(WORD color)
-	{
-		s_ColorMutex.Lock();
-		GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &consoleInfo);
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
-	}
-};
-#endif
 // Macros
 //------------------------------------------------------------------------------
 PRAGMA_DISABLE_PUSH_CLANG_WINDOWS( "-Wgnu-zero-variadic-macro-arguments" ) // token pasting of ',' and __VA_ARGS__ is a GNU extension [-Wgnu-zero-variadic-macro-arguments]
@@ -62,7 +17,7 @@ PRAGMA_DISABLE_PUSH_CLANG_WINDOWS( "-Wgnu-zero-variadic-macro-arguments" ) // to
             FLog::Verbose( fmtString, ##__VA_ARGS__ ); \
         }                                           \
     PRAGMA_DISABLE_PUSH_MSVC(4127)                  \
-    } while ( false );                              \
+    } while ( false )                               \
     PRAGMA_DISABLE_POP_MSVC
 
 #define FLOG_BUILD_REASON( fmtString, ... )         \
@@ -72,14 +27,14 @@ PRAGMA_DISABLE_PUSH_CLANG_WINDOWS( "-Wgnu-zero-variadic-macro-arguments" ) // to
             FLog::Output( fmtString, ##__VA_ARGS__ ); \
         }                                           \
     PRAGMA_DISABLE_PUSH_MSVC(4127)                  \
-    } while ( false );                              \
+    } while ( false )                               \
     PRAGMA_DISABLE_POP_MSVC
 
 #define FLOG_OUTPUT( fmtString, ... )               \
     do {                                            \
         FLog::Output( fmtString, ##__VA_ARGS__ );   \
     PRAGMA_DISABLE_PUSH_MSVC(4127)                  \
-    } while ( false );                              \
+    } while ( false )                               \
     PRAGMA_DISABLE_POP_MSVC
 
 #define FLOG_MONITOR( fmtString, ... )              \
@@ -89,28 +44,28 @@ PRAGMA_DISABLE_PUSH_CLANG_WINDOWS( "-Wgnu-zero-variadic-macro-arguments" ) // to
             FLog::Monitor( fmtString, ##__VA_ARGS__ ); \
         }                                           \
     PRAGMA_DISABLE_PUSH_MSVC(4127)                  \
-    } while ( false );                              \
+    } while ( false )                               \
     PRAGMA_DISABLE_POP_MSVC
 
 #define FLOG_WARN( fmtString, ... )                 \
     do {                                            \
         FLog::Warning( fmtString, ##__VA_ARGS__ );  \
     PRAGMA_DISABLE_PUSH_MSVC(4127)                  \
-    } while ( false );                              \
+    } while ( false )                               \
     PRAGMA_DISABLE_POP_MSVC
 
 #define FLOG_ERROR( fmtString, ... )                \
     do {                                            \
         FLog::Error( fmtString, ##__VA_ARGS__ );    \
     PRAGMA_DISABLE_PUSH_MSVC(4127)                  \
-    } while ( false );                              \
+    } while ( false )                               \
     PRAGMA_DISABLE_POP_MSVC
 
 #define FLOG_ERROR_DIRECT( message )                \
     do {                                            \
         FLog::ErrorDirect( message );               \
     PRAGMA_DISABLE_PUSH_MSVC(4127)                  \
-    } while ( false );                              \
+    } while ( false )                               \
     PRAGMA_DISABLE_POP_MSVC
 
 PRAGMA_DISABLE_POP_CLANG_WINDOWS // -Wgnu-zero-variadic-macro-arguments

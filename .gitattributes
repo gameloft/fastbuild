@@ -14,8 +14,6 @@
 *.rtf	 diff=astextplain
 *.RTF	 diff=astextplain
 *.exe filter=lfs diff=lfs merge=lfs -text
-FBuild filter=lfs diff=lfs merge=lfs -text
-FBuildWorker filter=lfs diff=lfs merge=lfs -text
 *.png filter=lfs diff=lfs merge=lfs -text
 *.ico filter=lfs diff=lfs merge=lfs -text
 *.bat text eol=crlf

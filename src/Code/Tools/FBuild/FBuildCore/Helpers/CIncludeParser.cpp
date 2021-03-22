@@ -250,6 +250,8 @@ bool CIncludeParser::ParseMSCL_Preprocessed( const char * compilerOutput,
 
 // Parse
 //------------------------------------------------------------------------------
+// TODO:C - restructure function to avoid use of gotos
+PRAGMA_DISABLE_PUSH_MSVC(26051) // Function with irreducible control flow graph.
 bool CIncludeParser::ParseGCC_Preprocessed( const char * compilerOutput,
                                             size_t compilerOutputSize )
 {
@@ -282,12 +284,12 @@ bool CIncludeParser::ParseGCC_Preprocessed( const char * compilerOutput,
             ++pos;
             goto foundInclude;
         }
-        // if ( strncmp( pos, "line ", 5 ) == 0 )
-        // {
-            // hasFlags = false;
-            // pos += 5;
-            // goto foundInclude;
-        // }
+        if ( strncmp( pos, "line ", 5 ) == 0 )
+        {
+            hasFlags = false;
+            pos += 5;
+            goto foundInclude;
+        }
         continue; // some other directive we don't care about
 
     foundInclude:
@@ -346,7 +348,7 @@ bool CIncludeParser::ParseGCC_Preprocessed( const char * compilerOutput,
         // only add an include if the preprocessor included it (indicated by the `1` flag
         // https://gcc.gnu.org/onlinedocs/cpp/Preprocessor-Output.html
         // or if it is coming from -fms-extention which doesn't have flags
-        if ( strncmp( pos, " 1", 2 ) == 0 || !hasFlags ) //[GL] Add to fix rebuild files in strip stage with #line
+        if ( strncmp( pos, " 1", 2 ) == 0 || !hasFlags )
         {
             AddInclude( lineStart, lineEnd );
         }
@@ -355,6 +357,7 @@ bool CIncludeParser::ParseGCC_Preprocessed( const char * compilerOutput,
 
     return true;
 }
+PRAGMA_DISABLE_POP_MSVC
 
 // SwapIncludes
 //------------------------------------------------------------------------------

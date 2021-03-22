@@ -11,10 +11,8 @@
 #include "Tools/FBuild/FBuildCore/Graph/NodeGraph.h"
 
 // Core
-#include "Core/Containers/AutoPtr.h"
+#include "Core/Containers/UniquePtr.h"
 #include "Core/Env/Env.h"
-#include "Core/FileIO/FileIO.h"
-#include "Core/FileIO/FileStream.h"
 #include "Core/Strings/AStackString.h"
 
 // Defines
@@ -28,7 +26,6 @@
 REFLECT_NODE_BEGIN( SettingsNode, Node, MetaNone() )
     REFLECT_ARRAY(  m_Environment,              "Environment",              MetaOptional() )
     REFLECT(        m_CachePath,                "CachePath",                MetaOptional() )
-	REFLECT(		m_DataPath,					"DataPath",					MetaOptional() ) //[GL] Add to modify to relative path when Python is the compiler
     REFLECT(        m_CachePathMountPoint,      "CachePathMountPoint",      MetaOptional() )
     REFLECT(        m_CachePluginDLL,           "CachePluginDLL",           MetaOptional() )
     REFLECT(        m_CachePluginDLLConfig,     "CachePluginDLLConfig",     MetaOptional() )
@@ -105,13 +102,6 @@ const AString & SettingsNode::GetCachePathMountPoint() const
     return m_CachePathMountPointFromEnvVar;
 }
 
-// GetDataPath
-//------------------------------------------------------------------------------
-const AString & SettingsNode::GetDataPath() const //[GL] Add to modify to relative path when Python is the compiler
-{
-	return m_DataPath;
-}
-
 // GetCachePluginDLL
 //------------------------------------------------------------------------------
 const AString & SettingsNode::GetCachePluginDLL() const
@@ -141,7 +131,7 @@ void SettingsNode::ProcessEnvironment( const Array< AString > & envStrings ) con
     }
 
     // allocate space
-    AutoPtr< char > envString( (char *)ALLOC( size + 1 ) ); // +1 for extra double-null
+    UniquePtr< char > envString( (char *)ALLOC( size + 1 ) ); // +1 for extra double-null
 
     // while iterating, extract the LIB environment variable (if there is one)
     AStackString<> libEnvVar;

@@ -49,19 +49,19 @@ void TestLinker::ArgHelpers() const
     // Exact match
     {
         AStackString<> token( "-L" );
-        TEST_ASSERT( LinkerNode::IsStartOfLinkerArg( token, "L" ) )
+        TEST_ASSERT( LinkerNode::IsStartOfLinkerArg( token, "L" ) );
     }
 
     // Starts with
     {
         AStackString<> token( "-Lthing" );
-        TEST_ASSERT( LinkerNode::IsStartOfLinkerArg( token, "L" ) )
+        TEST_ASSERT( LinkerNode::IsStartOfLinkerArg( token, "L" ) );
     }
 
     // Check case sensitive is respected
     {
         AStackString<> token( "-l" );
-        TEST_ASSERT( LinkerNode::IsStartOfLinkerArg( token, "L" ) == false )
+        TEST_ASSERT( LinkerNode::IsStartOfLinkerArg( token, "L" ) == false );
     }
 }
 
@@ -72,49 +72,49 @@ void TestLinker::ArgHelpers_MSVC() const
     // Exact match args, using /
     {
         AStackString<> token( "/DLL" );
-        TEST_ASSERT( LinkerNode::IsLinkerArg_MSVC( token, "DLL" ) )
+        TEST_ASSERT( LinkerNode::IsLinkerArg_MSVC( token, "DLL" ) );
     }
 
     // Exact match args, using -
     {
         AStackString<> token( "-DLL" );
-        TEST_ASSERT( LinkerNode::IsLinkerArg_MSVC( token, "DLL" ) )
+        TEST_ASSERT( LinkerNode::IsLinkerArg_MSVC( token, "DLL" ) );
     }
 
     // Exact match args, lower-case, using /
     {
         AStackString<> token( "/dll" );
-        TEST_ASSERT( LinkerNode::IsLinkerArg_MSVC( token, "DLL" ) )
+        TEST_ASSERT( LinkerNode::IsLinkerArg_MSVC( token, "DLL" ) );
     }
 
     // Exact match args, lower-case, using -
     {
         AStackString<> token( "-dll" );
-        TEST_ASSERT( LinkerNode::IsLinkerArg_MSVC( token, "DLL" ) )
+        TEST_ASSERT( LinkerNode::IsLinkerArg_MSVC( token, "DLL" ) );
     }
 
     // Starts with args, using /
     {
         AStackString<> token( "/ORDER:@orderfile.txt" );
-        TEST_ASSERT( LinkerNode::IsStartOfLinkerArg_MSVC( token, "ORDER:" ) )
+        TEST_ASSERT( LinkerNode::IsStartOfLinkerArg_MSVC( token, "ORDER:" ) );
     }
 
     // Starts with args, using -
     {
         AStackString<> token( "-ORDER:@orderfile.txt" );
-        TEST_ASSERT( LinkerNode::IsStartOfLinkerArg_MSVC( token, "ORDER:" ) )
+        TEST_ASSERT( LinkerNode::IsStartOfLinkerArg_MSVC( token, "ORDER:" ) );
     }
 
     // Starts with args, lower-case, using /
     {
         AStackString<> token( "/order:@orderfile.txt" );
-        TEST_ASSERT( LinkerNode::IsStartOfLinkerArg_MSVC( token, "ORDER:" ) )
+        TEST_ASSERT( LinkerNode::IsStartOfLinkerArg_MSVC( token, "ORDER:" ) );
     }
 
     // Starts with args, lower-case, using -
     {
         AStackString<> token( "-order:@orderfile.txt" );
-        TEST_ASSERT( LinkerNode::IsStartOfLinkerArg_MSVC( token, "ORDER:" ) )
+        TEST_ASSERT( LinkerNode::IsStartOfLinkerArg_MSVC( token, "ORDER:" ) );
     }
 }
 
@@ -124,7 +124,7 @@ void TestLinker::LibrariesOnCommandLine() const
 {
     FBuild fBuild;
     NodeGraph nodeGraph;
-    BFFToken * iter = nullptr;
+    const BFFToken * iter = nullptr;
 
     // MSVC: 2 libraries
     {
@@ -186,7 +186,49 @@ void TestLinker::LibrariesOnCommandLine() const
         LinkerNode::GetOtherLibraries( nodeGraph, iter, nullptr, args, foundLibraries, isMSVC );
 
         TEST_ASSERT( foundLibraries.GetSize() == 1 );
+        TEST_ASSERT( foundLibraries[ 0 ].GetNode()->GetName().EndsWith( "libdummy1.so" ) );
+    }
+
+    // Other: -l style with -Bstatic and -Ddynamic
+    {
+        const bool isMSVC = false;
+        AStackString<> args( "-LTools/FBuild/FBuildTest/Data/TestLinker/LibrariesOnCommandLine -Wl,-Bstatic -ldummy1 -Wl,-Bdynamic -ldummy2" );
+
+        Dependencies foundLibraries;
+        LinkerNode::GetOtherLibraries( nodeGraph, iter, nullptr, args, foundLibraries, isMSVC );
+
+        TEST_ASSERT( foundLibraries.GetSize() == 2 );
+        // To not overcomplicate the test we depend on the order in which GetOtherLibraries() emits dependencies.
+        // The order is not important and can be freely changed.
+        TEST_ASSERT( foundLibraries[ 0 ].GetNode()->GetName().EndsWith( "libdummy2.so" ) );
+        TEST_ASSERT( foundLibraries[ 1 ].GetNode()->GetName().EndsWith( "libdummy1.a" ) );
+    }
+
+    // Other: -l style, checking search order with -Bdynamic:
+    //        Preferring static library in the directory that comes earlier in the search path
+    //        over dynamic library in the directory that comes later in the search path.
+    {
+        const bool isMSVC = false;
+        AStackString<> args( "-LTools/FBuild/FBuildTest/Data/TestLinker/LibrariesOnCommandLine/StaticOnly -LTools/FBuild/FBuildTest/Data/TestLinker/LibrariesOnCommandLine -Wl,-Bdynamic -ldummy1" );
+
+        Dependencies foundLibraries;
+        LinkerNode::GetOtherLibraries( nodeGraph, iter, nullptr, args, foundLibraries, isMSVC );
+
+        TEST_ASSERT( foundLibraries.GetSize() == 1 );
         TEST_ASSERT( foundLibraries[ 0 ].GetNode()->GetName().EndsWith( "libdummy1.a" ) );
+        TEST_ASSERT( foundLibraries[ 0 ].GetNode()->GetName().Find( "StaticOnly" ) );
+    }
+
+    // Other: -l: style
+    {
+        const bool isMSVC = false;
+        AStackString<> args( "-LTools/FBuild/FBuildTest/Data/TestLinker/LibrariesOnCommandLine -l:dummy2.lib" );
+
+        Dependencies foundLibraries;
+        LinkerNode::GetOtherLibraries( nodeGraph, iter, nullptr, args, foundLibraries, isMSVC );
+
+        TEST_ASSERT( foundLibraries.GetSize() == 1 );
+        TEST_ASSERT( foundLibraries[ 0 ].GetNode()->GetName().EndsWith( "dummy2.lib" ) );
     }
 
     // Other - libs missing
@@ -320,11 +362,11 @@ void TestLinker::IncrementalLinking_MSVC() const
 void TestLinker::LinkerType() const
 {
     #define TEST_LINKERTYPE( exeName, expectedFlag ) \
-    { \
+    do { \
         const uint32_t flags = LinkerNode::DetermineLinkerTypeFlags( AStackString<>( "auto" ), \
                                                                      AStackString<>( exeName ) ); \
         TEST_ASSERT( ( flags & expectedFlag ) == expectedFlag ); \
-    }
+    } while( false )
 
     TEST_LINKERTYPE( "link",        LinkerNode::LINK_FLAG_MSVC );
     TEST_LINKERTYPE( "gcc",         LinkerNode::LINK_FLAG_GCC );

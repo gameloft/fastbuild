@@ -7,22 +7,18 @@
 #include "BFFKeywords.h"
 #include "BFFStackFrame.h"
 #include "Tools/FBuild/FBuildCore/BFF/BFFFile.h"
+#include "Tools/FBuild/FBuildCore/BFF/Functions/Function.h"
 #include "Tools/FBuild/FBuildCore/BFF/Tokenizer/BFFTokenizer.h"
 #include "Tools/FBuild/FBuildCore/BFF/Tokenizer/BFFTokenRange.h"
 #include "Tools/FBuild/FBuildCore/FBuild.h"
 #include "Tools/FBuild/FBuildCore/Graph/NodeGraph.h"
+#include "Tools/FBuild/FBuildCore/Helpers/BuildProfiler.h"
 #include "Tools/FBuild/FBuildCore/FLog.h"
-#include "Tools/FBuild/FBuildCore/BFF/Functions/Function.h"
 #include "Tools/FBuild/FBuildCore/FBuildVersion.h"
 
 // Core
-#include "Core/Containers/AutoPtr.h"
 #include "Core/Env/Assert.h"
-#include "Core/Env/Env.h"
-#include "Core/FileIO/FileIO.h"
-#include "Core/FileIO/FileStream.h"
 #include "Core/FileIO/PathUtils.h"
-#include "Core/Math/xxHash.h"
 #include "Core/Profile/Profile.h"
 #include "Core/Strings/AStackString.h"
 #include "Core/Time/Timer.h"
@@ -45,11 +41,11 @@ BFFParser::~BFFParser() = default;
 //------------------------------------------------------------------------------
 bool BFFParser::ParseFromFile( const char * fileName )
 {
-    PROFILE_FUNCTION
+    PROFILE_FUNCTION;
+    BuildProfilerScope buildProfileScope( "ParseBFF" );
 
     // Tokenize file
-    const BFFToken * token = nullptr; // The root include doesn't have an associated token
-    if ( m_Tokenizer.TokenizeFromFile( AStackString<>( fileName ), token ) == false )
+    if ( m_Tokenizer.TokenizeFromFile( AStackString<>( fileName ) ) == false )
     {
         return false; // Tokenize will have emitted an error
     }
@@ -64,16 +60,14 @@ bool BFFParser::ParseFromFile( const char * fileName )
 
     // Walk tokens
     BFFTokenRange range( tokens.Begin(), tokens.End() );
-    bool result = Parse( range );
-
-    return result;
+    return Parse( range );
 }
 
 // ParseFromString
 //------------------------------------------------------------------------------
 bool BFFParser::ParseFromString( const char * fileName, const char * fileContents )
 {
-    PROFILE_FUNCTION
+    PROFILE_FUNCTION;
 
     // Tokenize string
     if ( m_Tokenizer.TokenizeFromString( AStackString<>( fileName ), AStackString<>( fileContents ) ) == false )
@@ -91,9 +85,7 @@ bool BFFParser::ParseFromString( const char * fileName, const char * fileContent
 
     // Walk tokens
     BFFTokenRange range( tokens.Begin(), tokens.End() );
-    bool result = Parse( range );
-
-    return result;
+    return Parse( range );
 }
 
 // Parse
@@ -188,6 +180,7 @@ bool BFFParser::Parse( BFFTokenRange & iter )
         if ( token->GetType() == BFFTokenType::EndOfFile )
         {
             iter++;
+            ASSERT( iter.IsAtEnd() ); // Should always be last arg
             continue;
         }
 
@@ -695,7 +688,13 @@ bool BFFParser::ParseUserFunctionCall( BFFTokenRange & iter, const BFFUserFuncti
         const BFFToken * arg = arguments[ i ];
         if ( arg->IsString() )
         {
-            BFFStackFrame::SetVarString( argName, arg->GetValueString(), &frame );
+            // unescape and subsitute embedded variables
+            AStackString< 2048 > value;
+            if ( PerformVariableSubstitutions( arg, value ) == false )
+            {
+                return false;
+            }
+            BFFStackFrame::SetVarString( argName, value, &frame );
         }
         else if ( arg->IsBooelan() )
         {
@@ -932,7 +931,6 @@ bool BFFParser::StoreVariableString( const AString & name,
             return false;
         }
     }
-    return false;
 }
 
 // StoreVariableArray
@@ -1266,7 +1264,7 @@ bool BFFParser::StoreVariableToVariable( const AString & dstName, const BFFToken
 
     // find src var
     const BFFVariable * varSrc = nullptr;
-    BFFStackFrame * const srcFrame = ( srcParentScope )
+    const BFFStackFrame * const srcFrame = ( srcParentScope )
         ? BFFStackFrame::GetParentDeclaration( srcName, nullptr, varSrc )
         : nullptr;
 
@@ -1316,7 +1314,7 @@ bool BFFParser::StoreVariableToVariable( const AString & dstName, const BFFToken
     }
 
     // if dst exists, types must match
-    BFFVariable::VarType srcType = varSrc->GetType();
+    const BFFVariable::VarType srcType = varSrc->GetType();
     BFFVariable::VarType dstType;
     if ( varDst )
     {
@@ -1382,7 +1380,7 @@ bool BFFParser::StoreVariableToVariable( const AString & dstName, const BFFToken
              ( srcType == BFFVariable::VAR_STRUCT ) &&
              !subtract )
         {
-            uint32_t num = (uint32_t)( 1 + ( ( concat && !dstIsEmpty ) ? varDst->GetArrayOfStructs().GetSize() : 0 ) );
+            const uint32_t num = (uint32_t)( 1 + ( ( concat && !dstIsEmpty ) ? varDst->GetArrayOfStructs().GetSize() : 0 ) );
             StackArray<const BFFVariable *> values;
             values.SetCapacity( num );
             if ( concat && !dstIsEmpty )
@@ -1536,7 +1534,7 @@ bool BFFParser::StoreVariableToVariable( const AString & dstName, const BFFToken
             const Array< const BFFVariable * > & srcMembers = varSrc->GetStructMembers();
             if ( concat )
             {
-                BFFVariable *const newVar = BFFStackFrame::ConcatVars( dstName, varDst, varSrc, dstFrame, operatorToken );
+                const BFFVariable * const newVar = BFFStackFrame::ConcatVars( dstName, varDst, varSrc, dstFrame, operatorToken );
                 if ( newVar == nullptr )
                 {
                     return false; // ConcatVars will have emitted an error

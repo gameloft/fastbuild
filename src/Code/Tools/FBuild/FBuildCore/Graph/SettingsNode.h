@@ -26,7 +26,6 @@ public:
 
     // Access to settings
     const AString &                     GetCachePath() const;
-	const AString &                     GetDataPath() const; //[GL] Add to modify to relative path when Python is the compiler
     const AString &                     GetCachePathMountPoint() const;
     const AString &                     GetCachePluginDLL() const;
     const AString &                     GetCachePluginDLLConfig() const;
@@ -46,7 +45,6 @@ private:
     //friend class FunctionSettings;
     Array< AString  >   m_Environment;
     AString             m_CachePath;
-	AString				m_DataPath;	//[GL] Add to modify to relative path when Python is the compiler
     AString             m_CachePathMountPoint;
     AString             m_CachePluginDLL;
     AString             m_CachePluginDLLConfig;

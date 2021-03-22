@@ -31,8 +31,8 @@ private:
 REGISTER_TESTS_BEGIN( TestMemPoolBlock )
     REGISTER_TEST( TestUnused )
     REGISTER_TEST( TestAllocs )
-    REGISTER_TEST( TestAllocsMultiplePages );
-    REGISTER_TEST( TestSpeed );
+    REGISTER_TEST( TestAllocsMultiplePages )
+    REGISTER_TEST( TestSpeed )
 REGISTER_TESTS_END
 
 // TestUnused
@@ -106,7 +106,7 @@ void TestMemPoolBlock::TestSpeed()
         {
             for ( uint32_t i = 0; i < numAllocs; ++i )
             {
-                uint32_t * mem = (uint32_t *)malloc( allocSize );
+                uint32_t * const mem = (uint32_t *)malloc( allocSize );
                 allocs.Append( mem );
             }
             for ( uint32_t i = 0; i < numAllocs; ++i )

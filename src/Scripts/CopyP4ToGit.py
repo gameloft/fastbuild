@@ -76,7 +76,7 @@ for file in files:
     try:
         dst_filetime = os.path.getmtime(dst_file)
     except:
-        print(' FAILED: get time')
+        pass # file might be new
 
     # needs copying?
     if src_filetime != dst_filetime:
@@ -92,7 +92,7 @@ for file in files:
         try:
             os.chmod(dst_file, stat.S_IWRITE)
         except:
-            print(' FAILED: grant writable')
+            pass
 
         # copy file
         shutil.copy2(src_file, dst_path)
