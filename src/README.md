@@ -30,14 +30,6 @@ Improvements and bug fixes are gladly accepted. FASTBuild has been improved imme
 
 **Adhere to the coding style** - Please keep variable/function naming, whitespace style and indentation (4 space tabs) consistent. Consistency helps keep the code maintainable.
 
-## Tag policy
-| Tag | Purpose |
-| :----- | :----- |
-| 1.0.0 | Fastbuild 97 (Binaries) |
-| 1.0.1    | Fastbuild 98 (Binaries) |
-| 1.0.1new    | Fastbuild 101 (Binaries + src) |
-| 1.0.2    | Fastbuild 102 (Binaries + src) |
-
 ## Notes
 * Switch default builder (Vanilla FastBuild) using VS2019 to VS2017
 * Windows10_SDKBasePath: Change from `_CURRENT_BFF_DIR_` to `C:\Program Files (x86)\Windows Kits`
