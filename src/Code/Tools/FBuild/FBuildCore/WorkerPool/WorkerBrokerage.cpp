@@ -374,14 +374,14 @@ void WorkerBrokerage::UpdateBrokerageFilePath()
 {
     if ( !m_BrokerageRoots.IsEmpty() )
     {
-        if ( !m_IPAddress.IsEmpty() )
+       /* if ( !m_IPAddress.IsEmpty() )
         {
             m_BrokerageFilePath.Format( "%s%s", m_BrokerageRoots[0].Get(), m_IPAddress.Get() );
         }
         else
-        {
-            m_BrokerageFilePath.Format( "%s%s", m_BrokerageRoots[0].Get(), m_HostName.Get() );
-        }
+        {*/
+            m_BrokerageFilePath.Format( "%s%s", m_BrokerageRoots[0].Get(), m_HostName.Get() );//[GL] Use PC name instead IP
+        //}
     }
 }
 
