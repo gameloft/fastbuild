@@ -11,10 +11,8 @@
 #include "Tools/FBuild/FBuildCore/Graph/NodeGraph.h"
 
 // Core
-#include "Core/Containers/AutoPtr.h"
+#include "Core/Containers/UniquePtr.h"
 #include "Core/Env/Env.h"
-#include "Core/FileIO/FileIO.h"
-#include "Core/FileIO/FileStream.h"
 #include "Core/Strings/AStackString.h"
 
 // Defines
@@ -42,7 +40,7 @@ REFLECT_END( SettingsNode )
 //------------------------------------------------------------------------------
 SettingsNode::SettingsNode()
 : Node( AString::GetEmpty(), Node::SETTINGS_NODE, Node::FLAG_NONE )
-, m_WorkerConnectionLimit( 15 )
+, m_WorkerConnectionLimit( FBuild::Get().GetOptions().m_WorkerLimit )
 , m_DistributableJobMemoryLimitMiB( DIST_MEMORY_LIMIT_DEFAULT )
 , m_DisableDBMigration( false )
 {
@@ -141,7 +139,7 @@ void SettingsNode::ProcessEnvironment( const Array< AString > & envStrings ) con
     }
 
     // allocate space
-    AutoPtr< char > envString( (char *)ALLOC( size + 1 ) ); // +1 for extra double-null
+    UniquePtr< char > envString( (char *)ALLOC( size + 1 ) ); // +1 for extra double-null
 
     // while iterating, extract the LIB environment variable (if there is one)
     AStackString<> libEnvVar;

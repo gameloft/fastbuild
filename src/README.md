@@ -9,12 +9,12 @@ be found here: http://fastbuild.org
 
 ## Branch policy
 
-**Patches will only be accepted into the "dev" branch.**
+**Patches will only be accepted into the "development" branch.**
 
 | Branch | Purpose |
 | :----- | :----- |
 | master | Stable branch containing snapshot of latest release |
-| dev    | Development branch for integration of pull requests |
+| development    | Development branch for integration of pull requests |
 
 ## Contribution Guidelines
 
@@ -29,6 +29,7 @@ Improvements and bug fixes are gladly accepted. FASTBuild has been improved imme
 **Update documentation if appropriate** - For changes in behaviour, or addition of new features, please update the documentation.
 
 **Adhere to the coding style** - Please keep variable/function naming, whitespace style and indentation (4 space tabs) consistent. Consistency helps keep the code maintainable.
+
 ## Notes
 * Switch default builder (Vanilla FastBuild) using VS2019 to VS2017
-* Windows10_SDKBasePath: Change from `_CURRENT_BFF_DIR_` to `C:\Program Files (x86)\Windows Kits`
+* Windows10_SDKBasePath: Change from `_CURRENT_BFF_DIR_` to `C:\Program Files (x86)\Windows Kits` 

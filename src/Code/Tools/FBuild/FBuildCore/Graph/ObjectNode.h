@@ -5,8 +5,9 @@
 // Includes
 //------------------------------------------------------------------------------
 #include "FileNode.h"
+
+// Core
 #include "Core/Containers/Array.h"
-#include "Core/Containers/AutoPtr.h"
 #include "Core/Env/Assert.h"
 #include "Core/Process/Process.h"
 
@@ -38,7 +39,7 @@ public:
     static inline Node::Type GetTypeS() { return Node::OBJECT_NODE; }
 
 
-    enum Flags
+    enum Flags : uint32_t
     {
         FLAG_CAN_BE_CACHED      =   0x01,
         FLAG_CAN_BE_DISTRIBUTED =   0x02,
@@ -65,6 +66,7 @@ public:
         FLAG_ORBIS_WAVE_PSSLC   =   0x400000,
         FLAG_DIAGNOSTICS_COLOR_AUTO = 0x800000,
         FLAG_WARNINGS_AS_ERRORS_CLANGGCC = 0x1000000,
+        FLAG_CLANG_CL           = 0x2000000,
     };
     static uint32_t DetermineFlags( const CompilerNode * compilerNode,
                                     const AString & args,
@@ -77,7 +79,8 @@ public:
     inline bool IsUsingPCH() const { return GetFlag( FLAG_USING_PCH ); }
     inline bool IsClang() const { return GetFlag( FLAG_CLANG ); }
     inline bool IsGCC() const { return GetFlag( FLAG_GCC ); }
-    inline bool IsMSVC() const { return GetFlag(FLAG_MSVC); }
+    inline bool IsMSVC() const { return GetFlag( FLAG_MSVC ); }
+    inline bool IsClangCl() const { return GetFlag( FLAG_CLANG_CL ); }
     inline bool IsUsingPDB() const { return GetFlag( FLAG_USING_PDB ); }
     inline bool IsUsingStaticAnalysisMSVC() const { return GetFlag( FLAG_STATIC_ANALYSIS_MSVC ); }
 
@@ -108,7 +111,11 @@ private:
 
     BuildResult DoBuildMSCL_NoCache( Job * job, bool useDeoptimization );
     BuildResult DoBuildWithPreProcessor( Job * job, bool useDeoptimization, bool useCache, bool useSimpleDist );
-    BuildResult DoBuildWithPreProcessor2( Job * job, bool useDeoptimization, bool stealingRemoteJob, bool racingRemoteJob );
+    BuildResult DoBuildWithPreProcessor2( Job * job,
+                                          bool useDeoptimization,
+                                          bool stealingRemoteJob,
+                                          bool racingRemoteJob,
+                                          bool isFollowingLightCacheMiss );
     BuildResult DoBuild_QtRCC( Job * job );
     BuildResult DoBuildOther( Job * job, bool useDeoptimization );
 

@@ -601,7 +601,7 @@ uint32_t AString::Replace( char from, char to, uint32_t maxReplaces )
 void AString::ToLower()
 {
     char * pos = m_Contents;
-    char * end = m_Contents + m_Length;
+    const char * const end = m_Contents + m_Length;
     while ( pos < end )
     {
         char c = *pos;
@@ -619,7 +619,7 @@ void AString::ToLower()
 void AString::ToUpper()
 {
     char * pos = m_Contents;
-    char * end = m_Contents + m_Length;
+    const char * const end = m_Contents + m_Length;
     while ( pos < end )
     {
         char c = *pos;
@@ -1340,7 +1340,7 @@ test_match:
 
         // different, so return relationship
         return ( *a > *b ) ? 1 : -1;
-    };
+    }
     return 0; // strings identical upto 'num' chars
 }
 
@@ -1376,7 +1376,7 @@ test_match:
 
         // different, so return relationship
         return ( a1 - b1 );
-    };
+    }
     return 0; // strings identical upto 'num' chars
 }
 

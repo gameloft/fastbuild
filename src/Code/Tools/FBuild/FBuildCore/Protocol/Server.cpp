@@ -171,7 +171,7 @@ bool Server::IsSynchingTool( AString & statusStr ) const
             const Job * const * jEnd = otherCS->m_WaitingJobs.End();
             for ( Job ** jIt = otherCS->m_WaitingJobs.Begin(); jIt != jEnd; ++jIt )
             {
-                Job * j = *jIt;
+                const Job * j = *jIt;
                 ToolManifest * jMan = j->GetToolManifest();
                 if ( cancelledManifests.Find( jMan ) )
                 {
@@ -484,7 +484,7 @@ void Server::CheckWaitingJobs( const ToolManifest * manifest )
         for ( int32_t i=( numJobs -1 ); i >= 0; --i )
         {
             Job * job = cs->m_WaitingJobs[ (size_t)i ];
-            ToolManifest * manifestForThisJob = job->GetToolManifest();
+            const ToolManifest * manifestForThisJob = job->GetToolManifest();
             ASSERT( manifestForThisJob );
             if ( manifestForThisJob == manifest )
             {
@@ -508,7 +508,7 @@ void Server::CheckWaitingJobs( const ToolManifest * manifest )
 //------------------------------------------------------------------------------
 /*static*/ uint32_t Server::ThreadFuncStatic( void * param )
 {
-    PROFILE_SET_THREAD_NAME( "ServerThread" )
+    PROFILE_SET_THREAD_NAME( "ServerThread" );
 
     Server * s = (Server *)param;
     s->ThreadFunc();
@@ -540,7 +540,7 @@ void Server::FindNeedyClients()
         return;
     }
 
-    PROFILE_FUNCTION
+    PROFILE_FUNCTION;
 
     MutexHolder mh( m_ClientListMutex );
 
@@ -613,7 +613,7 @@ void Server::FindNeedyClients()
 //------------------------------------------------------------------------------
 void Server::FinalizeCompletedJobs()
 {
-    PROFILE_FUNCTION
+    PROFILE_FUNCTION;
 
     JobQueueRemote & jcr = JobQueueRemote::Get();
     while ( Job * job = jcr.GetCompletedJob() )
@@ -636,6 +636,7 @@ void Server::FinalizeCompletedJobs()
             ms.Write( job->GetSystemErrorCount() > 0 );
             ms.Write( job->GetMessages() );
             ms.Write( job->GetNode()->GetLastBuildTime() );
+            ms.Write( job->GetRemoteThreadIndex() ); // The thread used to build the job to assist with visualization
 
             // write the data - build result for success, or output+errors for failure
             ms.Write( (uint32_t)job->GetDataSize() );
