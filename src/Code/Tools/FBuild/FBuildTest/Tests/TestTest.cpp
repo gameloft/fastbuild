@@ -50,7 +50,7 @@ void TestTest::CreateNode() const
 
     AStackString<> outputPath;
     NodeGraph::CleanPath( AStackString<>( "output.txt" ), outputPath );
-    TestNode * testNode = ng.CreateTestNode( outputPath );
+    const TestNode * testNode = ng.CreateTestNode( outputPath );
 
     TEST_ASSERT( testNode->GetType() == Node::TEST_NODE );
     TEST_ASSERT( TestNode::GetTypeS() == Node::TEST_NODE );
@@ -156,7 +156,6 @@ void TestTest::TimeOut() const
 {
     FBuildTestOptions options;
     options.m_ConfigFile = "Tools/FBuild/FBuildTest/Data/TestTest/test_timeout.bff";
-    options.m_FastCancel = true;
     FBuild fBuild( options );
     TEST_ASSERT( fBuild.Initialize() );
 

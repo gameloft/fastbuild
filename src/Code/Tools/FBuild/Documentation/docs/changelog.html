@@ -26,6 +26,113 @@
 
 <h1>Changelog</h1>
 
+
+<div class='newsitemheader'>
+    v1.04&nbsp;<font color='#bbbbbb'>(18th-Jan-2021)</font>
+</div>
+<div class='newsitembody'>
+    <b>Notes</b>
+	<ul>
+		<li>DB Version Changed : clean build will occur</li>
+		<li>Distributed compilation protocol has changed: please update workers</li>
+    </ul>
+    <b>New</b>
+	<ul>
+		<li><a href="options.html#profile">-profile</a> option emits fbuild_profile.json in Chrome tracing format, which can be used to visualize the build</li>
+		<li>Dependencies can be exported in DOT format using <a href="options.html#dot">-dot</a> and <a href="options.html#dot">-dotfull</a></li>
+	</ul>
+    <b>Fixes</b>
+    <ul>
+		<li>OSX binaries explicitly target OSX 10.7 (the minimum supported version)</li>
+		<li>Unity fixup is applied when using Clang-cl with static analysis so errors are correctly reported</li>
+		<li>Compilation with Clang doesn't fail when output is empty (can occur with Clang-cl with empty files)</li>
+		<li>SourceMapping_Experimental is applied correcly when using Clang-cl</li>
+		<li>Clang-cl distributed compilation is auto disabled when using SourceMapping_Experimental (remapping is not currently distributed)</li>
+		<li>Warnings are printed for remotely built objects when using Clang-cl even if "warning as errors" is off</li>
+		<li>-fixuperrorpaths is correctly applied to Clang warnings using (x,y) style line numbering</li>
+		<li>[OSX][Linux] -fixuperrorpaths with VBCC doesn't change slash direction on Linux/OSX</li>
+		<li>Fix typo in 'Could not resolve macro' LightCache messages</li>
+		<li>Executable and DLL '%1[1]' is now correctly expanded even if '%1[0]' is not used</li>
+		<li>Output messages no longer missing when using LightCache with -cachewrite and no distribution</li>
+    </ul>
+	<b>Improvements</b>
+	<ul>
+		<li>Distributed Compilation:</li>
+		<ul>
+			<li>Distributed compilation scheduling latency reduced by upto 100ms in certain scenarios</li>
+			<li>Distributed compilation performance improved slightly due to LZ4 compressor update (1.9.3)</li>
+			<li>Network Protocol bandwidth usage reduced slightly</li>
+			<li>FBuildWorker idle CPU usage reduced, particularly for systems with many cpu cores</li>
+			<li>FBuildWorker shuts down more quickly due to improved thread management</li>
+			<li>Jobs are scheduled in a more efficient order when using distributed compilation (both locally and remotely)</li>
+			<li>[Windows] Avoid per-CPU core stall updating FBuildWorker UI, which could also delay exiting (up to 100ms per core)</li>
+		</ul>
+		<li>Cache:</li>
+		<ul>
+			<li>Cache performance improved slightly due to LZ4 compressor update (1.9.3)</li>
+			<li>LightCache use is no longer inhibited by unused includes using macros: #include SOME_MACRO</li>
+		</ul>
+		<li>Compilation ordering improved by remove unnecesary dependencies from ObjectList and Library</li>
+		<li>[Windows] Reduce CPU overhead of FBuild slightly, particularly with many CPU cores</li>
+		<li>When using Clang with static analysis, results are written to output file if no output is written by Clang itself</li>
+		<li>Dependency database memory usage reduced slightly</li>
+		<li>FastCancel is enabled by default and can be disabled with -nofastcancel</li>
+		<li>Remove deprecated -nooutputbuffering (option hasn't done anything for a long time)</li>
+		<li>Build database read/write optimized slightly</li>
+	</ul>
+</div>
+
+<div class='newsitemheader'>
+    v1.03&nbsp;<font color='#bbbbbb'>(13th-Dec-2020)</font>
+</div>
+<div class='newsitembody'>
+    <b>Notes</b>
+	<ul>
+		<li>DB Version Changed : clean build will occur</li>
+    </ul>
+    <b>New</b>
+	<ul>
+		<li>Support integration of FASTBuild, Windows Subsystem for Linux and Visual Studio</li>
+		<li>-wsl option can forward to Windows Subsystem for Linux in Visual Studio</li>
+		<li>FASTBuild can be built as a native exe for Apple ARM (Thanks to Javier Blazquez)</li>
+		<li>ListDependencies() function can output discovered dependencies (Thanks to poppolopoppo)</li>
+	</ul>
+    <b>Fixes</b>
+    <ul>
+		<li>BFF Parsing:</li>
+		<ul>
+			<li>$ Subsititutions in string literal args to User Functions were not handled in the correct scope</li>
+			<li>Escaped characters in string literal args to User Functions were not escaped correctly</li>
+			<li>#if directives were not correctly handled when used inside list declarations (and possibly other cases)</li>
+		</ul>
+		<li>-Bstatic and -Bdynamic are respected when parsing linker command line (Thanks to dummyunit)</li>
+		<li>-l option checks for dynamic libs first to match GNU ld behavior (Thanks to dummyunit)</li>
+		<li>Visual Studio solution header for VS2019 so version selector works correctly</li>
+		<li>Add missing \n to ListDependenciesNode output (Thanks to mhoulier)</li>
+		<li>Fix features documentation typo (Thanks to Aleksey Kladov)</li>
+		<li>Respect minimum stack size constraint on OSX and Linux (Thanks to Nicolas)</li>
+		<li>Missing errors for preprocessors that write to stdout on failure</li>
+    </ul>
+	<b>Improvements</b>
+	<ul>
+		<li>Distributed Compilation:</li>
+		<ul>
+			<li>Workers write their IP directly to brokerage to improve discoverability (Thanks to Joe Kirchoff)</li>
+			<li>Workers can be explicity listed with a FASTBUILD_WORKERS env var (Thanks to eclazi)</li>
+		</ul>
+		<li>Project Generation:</li>
+		<ul>
+			<li>Intellisense/CodeSense detects more path types (/imsvsc, -isystem and others) (Thanks to dummyunit)</li>
+		</ul>
+		<li>Add explicit support for Clang on windows in clang-cl mode (Thanks to Lambert Clara)</li>
+		<li>Detect libraries provided directly on command line via -l:filename (Thanks to dummyunit)</li>
+		<li>MSVC linker failure LNK1201 is automatically retried to work around VS2019 bug</li>
+		<li>Allow FASTBuild to be compiled for ARM on Linux (Thanks to Nicolas)</li>
+		<li>Add .Libraries2 to Executable and DLL which can be accessed with %1[1]</li>
+	</ul>
+</div>
+
+
 <div class='newsitemheader'>
     v1.02&nbsp;<font color='#bbbbbb'>(25th-Aug-2020)</font>
 </div>
@@ -2031,6 +2138,6 @@ Fixes
     </div>
 
 
-    </div><div class='footer'>&copy; 2012-2020 Franta Fulin</div></div></div>
+    </div><div class='footer'>&copy; 2012-2021 Franta Fulin</div></div></div>
 </body>
 </html>

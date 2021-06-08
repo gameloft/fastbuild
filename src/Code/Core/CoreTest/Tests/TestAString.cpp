@@ -5,7 +5,8 @@
 //------------------------------------------------------------------------------
 #include "TestFramework/UnitTest.h"
 
-#include "Core/Containers/AutoPtr.h"
+// Core
+#include "Core/Containers/UniquePtr.h"
 #include "Core/Strings/AStackString.h"
 #include "Core/Strings/AString.h"
 
@@ -238,7 +239,7 @@ void TestAString::AStackStringOverflow() const
 void TestAString::BigString() const
 {
     // create a massive string
-    AutoPtr< char > mem( (char *)ALLOC( ( 10 * MEGABYTE ) + 1 ) );
+    UniquePtr< char > mem( (char *)ALLOC( ( 10 * MEGABYTE ) + 1 ) );
     memset( mem.Get(), 'a', 10 * MEGABYTE );
     mem.Get()[ 10 * MEGABYTE ] = '\000';
 
@@ -650,21 +651,21 @@ void TestAString::Tokenize() const
 void TestAString::PatternMatch() const
 {
     #define CHECK_MATCH( pat, str, match )              \
-    {                                                   \
+    do {                                                \
         AStackString<> string( str );                   \
         TEST_ASSERT( string.Matches( pat ) == match );  \
-    }
+    } while( false )
 
-    CHECK_MATCH( "*.cpp",   "File.cpp", true )
-    CHECK_MATCH( "*",       "File.cpp", true )
-    CHECK_MATCH( "File*.*", "File.cpp", true )
-    CHECK_MATCH( "*.c*",    "File.cpp", true )
-    CHECK_MATCH( "File.cpp","File.cpp", true )
+    CHECK_MATCH( "*.cpp",   "File.cpp", true );
+    CHECK_MATCH( "*",       "File.cpp", true );
+    CHECK_MATCH( "File*.*", "File.cpp", true );
+    CHECK_MATCH( "*.c*",    "File.cpp", true );
+    CHECK_MATCH( "File.cpp","File.cpp", true );
 
-    CHECK_MATCH( "*.cpp",   "File.CPP", false )
-    CHECK_MATCH( "File*.*", "FILE.cpp", false )
-    CHECK_MATCH( "*.c*",    "File.CPP", false )
-    CHECK_MATCH( "File.cpp","file.cpp", false )
+    CHECK_MATCH( "*.cpp",   "File.CPP", false );
+    CHECK_MATCH( "File*.*", "FILE.cpp", false );
+    CHECK_MATCH( "*.c*",    "File.CPP", false );
+    CHECK_MATCH( "File.cpp","file.cpp", false );
 
     CHECK_MATCH( "*.cpp",   "File.c",           false );
     CHECK_MATCH( "*.cpp",   "File.cpp~",        false );
@@ -684,21 +685,21 @@ void TestAString::PatternMatch() const
 void TestAString::PatternMatchI() const
 {
     #define CHECK_MATCH( pat, str, match )              \
-    {                                                   \
+    do {                                                \
         AStackString<> string( str );                   \
         TEST_ASSERT( string.MatchesI( pat ) == match ); \
-    }
+    } while( false )
 
-    CHECK_MATCH( "*.cpp",   "File.cpp", true )
-    CHECK_MATCH( "*",       "File.cpp", true )
-    CHECK_MATCH( "File*.*", "File.cpp", true )
-    CHECK_MATCH( "*.c*",    "File.cpp", true )
-    CHECK_MATCH( "File.cpp","File.cpp", true )
+    CHECK_MATCH( "*.cpp",   "File.cpp", true );
+    CHECK_MATCH( "*",       "File.cpp", true );
+    CHECK_MATCH( "File*.*", "File.cpp", true );
+    CHECK_MATCH( "*.c*",    "File.cpp", true );
+    CHECK_MATCH( "File.cpp","File.cpp", true );
 
-    CHECK_MATCH( "*.cpp",   "File.CPP", true )
-    CHECK_MATCH( "File*.*", "FILE.cpp", true )
-    CHECK_MATCH( "*.c*",    "File.CPP", true )
-    CHECK_MATCH( "File.cpp","file.cpp", true )
+    CHECK_MATCH( "*.cpp",   "File.CPP", true );
+    CHECK_MATCH( "File*.*", "FILE.cpp", true );
+    CHECK_MATCH( "*.c*",    "File.CPP", true );
+    CHECK_MATCH( "File.cpp","file.cpp", true );
 
     CHECK_MATCH( "*.cpp",   "File.c",           false );
     CHECK_MATCH( "*.cpp",   "File.cpp~",        false );

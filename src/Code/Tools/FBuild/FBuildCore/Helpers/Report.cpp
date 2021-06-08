@@ -47,6 +47,7 @@ uint32_t g_ReportNodeColors[] = {
                                   0x000000, // SETTINGS_NODE (never seen)
                                   0xFFFFFF, // VSPROJEXTERNAL_NODE
                                   0xFFFFFF, // TEXT_FILE_NODE
+                                  0xEBABCB, // DIRECTORY_LIST_NODE
                                 };
 
 // CONSTRUCTOR
@@ -331,7 +332,9 @@ void Report::CreateOverview( const FBuildStats & stats )
     struct tm * timeinfo;
     time( &rawtime );
     PRAGMA_DISABLE_PUSH_MSVC( 4996 ) // This function or variable may be unsafe...
+    PRAGMA_DISABLE_PUSH_CLANG_WINDOWS( "-Wdeprecated-declarations" ) // 'localtime' is deprecated: This function or variable may be unsafe...
     timeinfo = localtime( &rawtime ); // TODO:C Consider using localtime_s
+    PRAGMA_DISABLE_POP_CLANG_WINDOWS // -Wdeprecated-declarations
     PRAGMA_DISABLE_POP_MSVC // 4996
     char timeBuffer[ 256 ];
     // Mon 1-Jan-2000 - 18:01:15

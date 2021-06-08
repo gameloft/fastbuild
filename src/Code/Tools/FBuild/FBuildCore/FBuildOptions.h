@@ -13,7 +13,7 @@
 
 // FBuildOptions
 //------------------------------------------------------------------------------
-struct FBuildOptions
+class FBuildOptions
 {
 public:
     FBuildOptions();
@@ -31,7 +31,8 @@ public:
         WRAPPER_MODE_NONE,
         WRAPPER_MODE_MAIN_PROCESS,
         WRAPPER_MODE_INTERMEDIATE_PROCESS,
-        WRAPPER_MODE_FINAL_PROCESS
+        WRAPPER_MODE_FINAL_PROCESS,
+        WRAPPER_MODE_WINDOWS_SUBSYSTEM_FOR_LINUX,
     };
 
     void SetWorkingDir( const AString & path );
@@ -43,6 +44,7 @@ public:
     AString     m_ProgramName;
     AString     m_Args; // Stored copy of args
     WrapperMode m_WrapperMode                       = WRAPPER_MODE_NONE;
+    AString     m_WSLPath;
 
     // Targets
     Array< AString > m_Targets;
@@ -50,11 +52,13 @@ public:
     // Build Behaviour
     bool        m_ForceCleanBuild                   = false;
     bool        m_StopOnFirstError                  = true;
-    bool        m_FastCancel                        = false;
+    bool        m_FastCancel                        = true;
     bool        m_WaitMode                          = false;
     bool        m_DisplayTargetList                 = false;
     bool        m_ShowHiddenTargets                 = false;
     bool        m_DisplayDependencyDB               = false;
+    bool        m_GenerateDotGraph                  = false;
+    bool        m_GenerateDotGraphFull              = false;
     bool        m_GenerateCompilationDatabase       = false;
     bool        m_NoUnity                           = false;
 
@@ -65,6 +69,9 @@ public:
     bool        m_CacheVerbose                      = false;
     uint32_t    m_CacheTrim                         = 0;
     int32_t     m_CacheCompressionLevel             = -1; // See Compresssor.h
+
+    // Worker Connection Limit
+    uint32_t     m_WorkerLimit                       = 15; 
 
     // Distributed Compilation
     bool        m_AllowDistributed                  = false;
@@ -87,6 +94,7 @@ public:
     bool        m_NoSummaryOnError                  = false;
     bool        m_GenerateReport                    = false;
     bool        m_EnableMonitor                     = false;
+    bool        m_Profile                           = false;
 
     // DB loading/saving
     bool        m_SaveDBOnCompletion                = false;

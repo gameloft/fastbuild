@@ -23,7 +23,7 @@
 #include "Tools/FBuild/FBuildCore/Graph/UnityNode.h"
 
 // Core
-#include "Core/Containers/AutoPtr.h"
+#include "Core/Containers/UniquePtr.h"
 #include "Core/FileIO/FileIO.h"
 #include "Core/FileIO/FileStream.h"
 #include "Core/FileIO/MemoryStream.h"
@@ -54,6 +54,7 @@ private:
     void DBCorrupt() const;
     void BFFDirtied() const;
     void DBVersionChanged() const;
+    void FixupErrorPaths() const;
 };
 
 // Register Tests
@@ -73,7 +74,30 @@ REGISTER_TESTS_BEGIN( TestGraph )
     REGISTER_TEST( DBCorrupt )
     REGISTER_TEST( BFFDirtied )
     REGISTER_TEST( DBVersionChanged )
+    REGISTER_TEST( FixupErrorPaths )
 REGISTER_TESTS_END
+
+// NodeTestHelper
+//------------------------------------------------------------------------------
+// Fake node to allow access to private internals
+class NodeTestHelper : public Node
+{
+    REFLECT_DECLARE( NodeTestHelper )
+public:
+    NodeTestHelper()
+        : Node( AStackString<>( "dummy" ), Node::PROXY_NODE, 0 )
+    {}
+    virtual bool Initialize( NodeGraph & /*nodeGraph*/, const BFFToken * /*funcStartIter*/, const Function * /*function*/ ) override
+    {
+        ASSERT( false );
+        return false;
+    }
+    virtual bool IsAFile() const override { return true; }
+
+    using Node::FixupPathForVSIntegration;
+};
+REFLECT_BEGIN( NodeTestHelper, Node, MetaNone() )
+REFLECT_END( NodeTestHelper )
 
 // EmptyGraph
 //------------------------------------------------------------------------------
@@ -165,7 +189,7 @@ void TestGraph::TestNodeTypes() const
         #else
             AStackString<> dllName( "/tmp/lib.so" );
         #endif
-        Node * n = ng.CreateDLLNode( dllName );
+        const Node * n = ng.CreateDLLNode( dllName );
         TEST_ASSERT( n->GetType() == Node::DLL_NODE );
         TEST_ASSERT( DLLNode::GetTypeS() == Node::DLL_NODE );
         TEST_ASSERT( AStackString<>( "DLL" ) == n->GetTypeName() );
@@ -176,7 +200,7 @@ void TestGraph::TestNodeTypes() const
         #else
             AStackString<> exeName( "/tmp/exe.exe" );
         #endif
-        Node * n = ng.CreateExeNode( exeName );
+        const Node * n = ng.CreateExeNode( exeName );
         TEST_ASSERT( n->GetType() == Node::EXE_NODE );
         TEST_ASSERT( ExeNode::GetTypeS() == Node::EXE_NODE );
         TEST_ASSERT( AStackString<>( "Exe" ) == n->GetTypeName() );
@@ -189,9 +213,9 @@ void TestGraph::TestNodeTypes() const
     }
     {
         #if defined( __WINDOWS__ )
-            Node * n = ng.CreateCSNode( AStackString<>( "c:\\csharp.dll" ) );
+            const Node * n = ng.CreateCSNode( AStackString<>( "c:\\csharp.dll" ) );
         #else
-            Node * n = ng.CreateCSNode( AStackString<>( "/dummy/csharp.dll" ) );
+            const Node * n = ng.CreateCSNode( AStackString<>( "/dummy/csharp.dll" ) );
         #endif
         TEST_ASSERT( n->GetType() == Node::CS_NODE);
         TEST_ASSERT( CSNode::GetTypeS() == Node::CS_NODE );
@@ -267,7 +291,7 @@ void TestGraph::TestDirectoryListNode() const
     DirectoryListNode * node = ng.CreateDirectoryListNode( name );
     node->m_Path = testFolder;
     node->m_Patterns = patterns;
-    BFFToken * token = nullptr;
+    const BFFToken * token = nullptr;
     TEST_ASSERT( node->Initialize( ng, token, nullptr ) );
     TEST_ASSERT( ng.FindNode( name ) == node );
 
@@ -332,8 +356,8 @@ void TestGraph::TestSerialization() const
         fs1.Open( dbFile1 );
         fs2.Open( dbFile2 );
         TEST_ASSERT( fs1.GetFileSize() == fs2.GetFileSize() ); // size should be the same
-        AutoPtr< char > buffer1( (char *)ALLOC( MEGABYTE ) );
-        AutoPtr< char > buffer2( (char *)ALLOC( MEGABYTE ) );
+        UniquePtr< char > buffer1( (char *)ALLOC( MEGABYTE ) );
+        UniquePtr< char > buffer2( (char *)ALLOC( MEGABYTE ) );
         uint32_t remaining = (uint32_t)fs1.GetFileSize();
         while ( remaining > 0 )
         {
@@ -453,11 +477,11 @@ void TestGraph::TestCleanPathPartial() const
     FBuild f( fo );
 
     #define CHECK( input, expectedOutput, makeFullPath ) \
-        { \
+        do { \
             AStackString<> cleaned; \
             NodeGraph::CleanPath( AStackString<>( input ), cleaned, makeFullPath ); \
             TEST_ASSERT( cleaned == expectedOutput ); \
-        }
+        } while( false )
 
     #if defined( __WINDOWS__ )
         #define CHECK_RELATIVE( input, expectedWindows, expectedOther ) \
@@ -584,7 +608,6 @@ void TestGraph::TestNoStopOnFirstError() const
     FBuildTestOptions options;
     options.m_NumWorkerThreads = 0; // ensure test behaves deterministically
     options.m_ConfigFile = "Tools/FBuild/FBuildTest/Data/TestGraph/NoStopOnFirstError/fbuild.bff";
-    options.m_FastCancel = true;
 
     // "Stop On First Error" build (default behaviour)
     {
@@ -849,6 +872,54 @@ void TestGraph::DBVersionChanged() const
 
     // Ensure user was informed about change
     TEST_ASSERT( GetRecordedOutput().Find( "Database version has changed" ) );
+}
+
+// FixupErrorPaths
+//------------------------------------------------------------------------------
+void TestGraph::FixupErrorPaths() const
+{
+    // Use a known location we can test for
+    #if defined( __WINDOWS__ )
+        const AStackString<> workingDir( "C:\\Windows\\System32" );
+    #else
+        const AStackString<> workingDir( "/tmp/subDir" );
+    #endif
+
+    // FBuild is used during path cleaning to access working dir
+    FBuildOptions fo;
+    fo.SetWorkingDir( workingDir );
+    FBuild f( fo );
+
+    // Helper macro
+    AStackString<> fixup, original;
+    #define TEST_FIXUP( path ) \
+        original = path; \
+        fixup = path; \
+        NodeTestHelper::FixupPathForVSIntegration( fixup ); \
+        do { \
+            if ( fixup.BeginsWith( workingDir ) == false ) \
+            { \
+                TEST_ASSERTM( false, "Path was not fixed up as expected.\n" \
+                                     "Original           : %s\n" \
+                                     "Returned           : %s\n" \
+                                     "Expected BeginsWith: %s\n", \
+                                     original.Get(), \
+                                     fixup.Get(), \
+                                     workingDir.Get() ); \
+            } \
+        } while ( false )
+
+    // GCC/Clang style
+    TEST_FIXUP( "Core/Mem/Mem.h:23:1: warning: some warning text" );
+    TEST_FIXUP( ".\\Tools/FBuild/FBuildCore/Graph/Node.h(294,24): warning: some warning text" );
+
+    // SNC style
+    TEST_FIXUP( "Core/Mem/Mem.h(23,1): warning 55: some warning text" );
+
+    // VBCC Style
+    TEST_FIXUP( "warning 55 in line 23 of \"Core/Mem/Mem.h\": some warning text" );
+
+    #undef TEST_FIXUP
 }
 
 //------------------------------------------------------------------------------

@@ -7,7 +7,8 @@
 
 #include "Tools/FBuild/FBuildCore/Helpers/Compressor.h"
 
-#include "Core/Containers/AutoPtr.h"
+// Core
+#include "Core/Containers/UniquePtr.h"
 #include "Core/FileIO/FileStream.h"
 #include "Core/Strings/AString.h"
 #include "Core/Time/Timer.h"
@@ -37,7 +38,7 @@ private:
 // Register Tests
 //------------------------------------------------------------------------------
 REGISTER_TESTS_BEGIN( TestCompressor )
-    REGISTER_TEST( CompressSimple );
+    REGISTER_TEST( CompressSimple )
     REGISTER_TEST( CompressPreprocessedFile )
     REGISTER_TEST( CompressObjFile )
     REGISTER_TEST( TestHeaderValidity )
@@ -122,7 +123,7 @@ void TestCompressor::CompressObjFile() const
 void TestCompressor::CompressHelper( const char * fileName ) const
 {
     // read some test data into a file
-    AutoPtr< void > data;
+    UniquePtr< void > data;
     size_t dataSize;
     {
         FileStream fs;
@@ -153,10 +154,10 @@ void TestCompressor::CompressHelper( const char * fileName ) const
         const uint32_t numRepeats = 4; // Increase to get more consistent numbers
         double compressTimeTaken = 0.0;
         double decompressTimeTaken = 0.0;
-        uint64_t compressedSize;
+        uint64_t compressedSize = 0;
 
         // Compression speed
-        AutoPtr< Compressor, DeleteDeletor > c;
+        UniquePtr< Compressor, DeleteDeletor > c;
         for ( uint32_t i = 0; i < numRepeats; ++i )
         {
             // Compress
@@ -164,7 +165,7 @@ void TestCompressor::CompressHelper( const char * fileName ) const
             Timer t;
             c.Get()->Compress( data.Get(), dataSize, compressionLevel );
             compressedSize = c.Get()->GetResultSize();
-            compressTimeTaken += t.GetElapsedMS();
+            compressTimeTaken += (double)t.GetElapsedMS();
         }
 
         // Decompression speed
@@ -175,7 +176,7 @@ void TestCompressor::CompressHelper( const char * fileName ) const
             Compressor d;
             TEST_ASSERT( d.Decompress( c.Get()->GetResult() ) );
             TEST_ASSERT( d.GetResultSize() == dataSize );
-            decompressTimeTaken += t2.GetElapsedMS();
+            decompressTimeTaken += (double)t2.GetElapsedMS();
 
             // Sanity check decompression returns original results
             if ( i == 0 )
@@ -199,7 +200,7 @@ void TestCompressor::CompressHelper( const char * fileName ) const
 //------------------------------------------------------------------------------
 void TestCompressor::TestHeaderValidity() const
 {
-    AutoPtr< uint32_t > buffer( (uint32_t *)ALLOC( 1024 ) );
+    UniquePtr< uint32_t > buffer( (uint32_t *)ALLOC( 1024 ) );
     memset( buffer.Get(), 0, 1024 );
     Compressor c;
     uint32_t * data = (uint32_t *)buffer.Get();

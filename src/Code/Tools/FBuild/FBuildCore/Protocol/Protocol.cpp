@@ -35,7 +35,6 @@
             "Manifest",
             "RequestFile",
             "File",
-            "ServerStatus"
         };
         static_assert( ( sizeof( msgNames ) / sizeof(const char *) ) == Protocol::NUM_MESSAGES, "msgNames item count doesn't match NUM_MESSAGES" );
 
@@ -45,7 +44,7 @@
 
 // IMessage
 //------------------------------------------------------------------------------
-Protocol::IMessage::IMessage( Protocol::MessageType msgType, uint32_t msgSize, bool hasPayload )
+Protocol::IMessage::IMessage( Protocol::MessageType msgType, uint8_t msgSize, bool hasPayload )
     : m_MsgType( msgType )
     , m_MsgSize( msgSize )
     , m_HasPayload( hasPayload )

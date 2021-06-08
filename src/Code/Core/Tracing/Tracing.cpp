@@ -30,7 +30,7 @@
     //------------------------------------------------------------------------------
     /*static*/ void Tracing::DebugSpam( const char * message )
     {
-        PROFILE_FUNCTION
+        PROFILE_FUNCTION;
 
         const bool messageConsumed = s_Callbacks.DispatchCallbacksDebugSpam( message );
         if ( messageConsumed )
@@ -245,10 +245,12 @@ bool Tracing::Callbacks::DispatchCallbacksDebugSpam( const char * message )
     {
         if ( (*cb)( message ) == false )
         {
+            m_InCallbackDispatch = false;
             return true; // callback wants msg supressed
         }
     }
 
+    m_InCallbackDispatch = false;
     return false;
 }
 

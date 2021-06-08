@@ -9,8 +9,9 @@ include:
 stages:
  - deploy_windows
  - deploy_osx
+ - deploy_linux
  - test
-
+ - tag_git
 sast:
   variables:
     SEARCH_MAX_DEPTH: 10
@@ -39,3 +40,24 @@ Deploy OSX:
        - ./src/Bin/MacOSX-x64/FBuild
        - ./src/Bin/MacOSX-x64/FBuildWorker
     expire_in: 3 days
+   
+Deploy Linux:   
+  stage: deploy_linux
+  script:
+    - bash src/Linux_build_release.sh
+  tags:
+    - linux 
+  artifacts:
+    paths:
+       - ./src/Bin/Linux-x64/fbuild
+       - ./src/Bin/Linux-x64/fbuildworker
+    expire_in: 3 days
+    
+New tag on git:
+    stage: tag_git
+    only:
+      - master
+    tags:
+      - windows
+    script:
+        - py src/releaseversion.py -tag
