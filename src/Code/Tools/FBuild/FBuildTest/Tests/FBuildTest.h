@@ -4,7 +4,7 @@
 
 // Includes
 //------------------------------------------------------------------------------
-#include "TestFramework/UnitTest.h"
+#include "TestFramework/TestGroup.h"
 
 #include "Tools/FBuild/FBuildCore/FBuild.h"
 #include "Tools/FBuild/FBuildCore/FBuildOptions.h"
@@ -18,7 +18,7 @@ struct FBuildStats;
 
 // FBuildTest
 //------------------------------------------------------------------------------
-class FBuildTest : public UnitTest
+class FBuildTest : public TestGroup
 {
 protected:
     FBuildTest();
@@ -42,7 +42,8 @@ protected:
     void Parse( const char * fileName, bool expectFailure = false ) const;
     bool ParseFromString( bool expectResult,
                           const char * bffContents,
-                          const char * expectedMessage = nullptr ) const;
+                          const char * expectedMessage = nullptr,
+                          const char * unexpectedMessage = nullptr ) const;
 
     // Helper macros
     #define TEST_PARSE_OK( ... )        TEST_ASSERT( ParseFromString( true, __VA_ARGS__ ) )
@@ -92,6 +93,9 @@ public:
     const Node * GetNode( const char * nodeName ) const;
 
     void SerializeDepGraphToText( const char * nodeName, AString & outBuffer ) const;
+
+    using FBuild::Build;
+    virtual bool Build( Node * nodeToBuild ) override;
 };
 
 //------------------------------------------------------------------------------

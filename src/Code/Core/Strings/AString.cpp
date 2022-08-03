@@ -46,9 +46,9 @@ AString::AString( uint32_t reserve )
 //------------------------------------------------------------------------------
 AString::AString( const AString & string )
 {
-    uint32_t len = string.GetLength();
+    const uint32_t len = string.GetLength();
     m_Length = len;
-    uint32_t reserved = Math::RoundUp( len, (uint32_t)2 );
+    const uint32_t reserved = Math::RoundUp( len, (uint32_t)2 );
     m_Contents = (char *)ALLOC( reserved + 1 );
     SetReserved( reserved, true );
     Copy( string.Get(), m_Contents, len ); // handles terminator (NOTE: Using len to support embedded nuls)
@@ -86,9 +86,9 @@ AString::AString( AString && string )
 AString::AString( const char * string )
 {
     ASSERT( string );
-    uint32_t len = (uint32_t)StrLen( string );
+    const uint32_t len = (uint32_t)StrLen( string );
     m_Length = len;
-    uint32_t reserved = Math::RoundUp( len, (uint32_t)2 );
+    const uint32_t reserved = Math::RoundUp( len, (uint32_t)2 );
     m_Contents = (char *)ALLOC( reserved + 1 );
     SetReserved( reserved, true );
     Copy( string, m_Contents ); // copy handles terminator
@@ -100,9 +100,9 @@ AString::AString( const char * start, const char * end )
 {
     ASSERT( start );
     ASSERT( end >= start );
-    uint32_t len = uint32_t( end - start );
+    const uint32_t len = uint32_t( end - start );
     m_Length = len;
-    uint32_t reserved = Math::RoundUp( len, (uint32_t)2 );
+    const uint32_t reserved = Math::RoundUp( len, (uint32_t)2 );
     m_Contents = (char *)ALLOC( reserved + 1 );
     SetReserved( reserved, true );
     Copy( start, m_Contents, len ); // copy handles terminator
@@ -142,8 +142,8 @@ bool AString::operator == ( const char * other ) const
     const char * otherPos = other;
 
 loop:
-    char c1 = *thisPos;
-    char c2 = *otherPos;
+    const char c1 = *thisPos;
+    const char c2 = *otherPos;
     if ( c1 != c2 )
     {
         return false;
@@ -234,7 +234,7 @@ AString & AString::VFormat( const char * fmtString, va_list args )
     #if defined( __WINDOWS__ )
 loop:
         // attempt the formatting
-        int len = vsnprintf_s( buffer, bufferSize, _TRUNCATE, fmtString, args );
+        const int len = vsnprintf_s( buffer, bufferSize, _TRUNCATE, fmtString, args );
 
         // did it fail to fit?
         if ( len < 0 )
@@ -275,6 +275,28 @@ loop:
     return *this;
 }
 
+// Scan
+//------------------------------------------------------------------------------
+int32_t AString::Scan( MSVC_SAL_SCANF const char * fmtString, ... )
+{
+    va_list args;
+    va_start( args, fmtString );
+    const int32_t result = vsscanf( m_Contents, fmtString, args );
+    va_end( args );
+    return result;
+}
+
+// ScanS
+//------------------------------------------------------------------------------
+/*static*/ int32_t AString::ScanS( const char * buffer, MSVC_SAL_SCANF const char * fmtString, ... )
+{
+    va_list args;
+    va_start( args, fmtString );
+    const int32_t result = vsscanf( buffer, fmtString, args );
+    va_end( args );
+    return result;
+}
+
 // Tokenize
 //------------------------------------------------------------------------------
 void AString::Tokenize( Array< AString > & tokens, char splitChar ) const
@@ -302,7 +324,7 @@ void AString::Tokenize( Array< AString > & tokens, char splitChar ) const
         }
 
         // hit a quote?
-        char c = *pos;
+        const char c = *pos;
         if ( ( c == '"' ) || ( c == '\'' ) )
         {
             if ( quoteChar == 0 )
@@ -375,7 +397,7 @@ void AString::Assign( const char * start, const char * end )
 {
     ASSERT( start );
     ASSERT( end >= start );
-    uint32_t len = uint32_t( end - start );
+    const uint32_t len = uint32_t( end - start );
     if ( len > GetReserved() )
     {
         GrowNoCopy( len );
@@ -394,7 +416,7 @@ void AString::Assign( const char * start, const char * end )
 //------------------------------------------------------------------------------
 void AString::Assign( const AString & string )
 {
-    uint32_t len = string.GetLength();
+    const uint32_t len = string.GetLength();
     if ( len > GetReserved() )
     {
         GrowNoCopy( len );
@@ -505,10 +527,10 @@ AString & AString::operator += ( char c )
 //------------------------------------------------------------------------------
 AString & AString::operator += ( const char * string )
 {
-    uint32_t suffixLen = (uint32_t)StrLen( string );
+    const uint32_t suffixLen = (uint32_t)StrLen( string );
     if ( suffixLen )
     {
-        uint32_t newLen = m_Length + suffixLen;
+        const uint32_t newLen = m_Length + suffixLen;
         if ( newLen > GetReserved() )
         {
             Grow( newLen );
@@ -524,10 +546,10 @@ AString & AString::operator += ( const char * string )
 //------------------------------------------------------------------------------
 AString & AString::operator += ( const AString & string )
 {
-    uint32_t suffixLen = string.GetLength();
+    const uint32_t suffixLen = string.GetLength();
     if ( suffixLen )
     {
-        uint32_t newLen = m_Length + suffixLen;
+        const uint32_t newLen = m_Length + suffixLen;
         if ( newLen > GetReserved() )
         {
             Grow( newLen );
@@ -545,7 +567,7 @@ AString & AString::Append( const char * string, size_t len )
 {
     if ( len )
     {
-        uint32_t newLen = m_Length + (uint32_t)len;
+        const uint32_t newLen = m_Length + (uint32_t)len;
         if ( newLen > GetReserved() )
         {
             Grow( newLen );
@@ -1079,7 +1101,7 @@ const char * AString::FindLastI( const AString & subString, const char * startPo
 //------------------------------------------------------------------------------
 bool AString::EndsWith( char c ) const
 {
-    uint32_t len = m_Length;
+    const uint32_t len = m_Length;
     if ( len == 0 )
     {
         return false;
@@ -1151,7 +1173,7 @@ bool AString::BeginsWith( char c ) const
 //------------------------------------------------------------------------------
 bool AString::BeginsWith( const char * string ) const
 {
-    size_t otherLen = StrLen( string );
+    const size_t otherLen = StrLen( string );
     if ( otherLen > GetLength() )
     {
         return false;
@@ -1163,7 +1185,7 @@ bool AString::BeginsWith( const char * string ) const
 //------------------------------------------------------------------------------
 bool AString::BeginsWith( const AString & string ) const
 {
-    uint32_t otherLen = string.GetLength();
+    const uint32_t otherLen = string.GetLength();
     if ( otherLen > GetLength() )
     {
         return false;
@@ -1175,7 +1197,7 @@ bool AString::BeginsWith( const AString & string ) const
 //------------------------------------------------------------------------------
 bool AString::BeginsWithI( const char * string ) const
 {
-    size_t otherLen = StrLen( string );
+    const size_t otherLen = StrLen( string );
     if ( otherLen > GetLength() )
     {
         return false;
@@ -1187,7 +1209,7 @@ bool AString::BeginsWithI( const char * string ) const
 //------------------------------------------------------------------------------
 bool AString::BeginsWithI( const AString & string ) const
 {
-    uint32_t otherLen = string.GetLength();
+    const uint32_t otherLen = string.GetLength();
     if ( otherLen > GetLength() )
     {
         return false;
@@ -1214,8 +1236,8 @@ test_match:
     int i;
     for ( i = 0; pat[ i ] && ( pat[ i ] != '*' ); i++ )
     {
-        char a = str[ i ];
-        char b = pat[ i ];
+        const char a = str[ i ];
+        const char b = pat[ i ];
         if ( a != b )
         {
             if ( !str[ i ] ) return false;
@@ -1411,7 +1433,7 @@ void AString::GrowNoCopy( uint32_t newLength )
     }
 
     // allocate space, rounded up to multiple of 2
-    uint32_t reserve = Math::RoundUp( newLength, (uint32_t)2 );
+    const uint32_t reserve = Math::RoundUp( newLength, (uint32_t)2 );
     m_Contents = (char *)ALLOC( reserve + 1 ); // also allocate for \0 terminator
     SetReserved( reserve, true );
 }

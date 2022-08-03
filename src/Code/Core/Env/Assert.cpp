@@ -110,12 +110,15 @@ bool IsDebuggerAttached()
             #if defined( __WINDOWS__ )
                 // TODO:LINUX Fix MessageBox use
                 // TODO:OSX Fix MessageBox use
-                int res = MessageBox( nullptr, buffer, "Assertion Failed - Break Execution?", MB_YESNO | MB_ICONERROR );
+                const int res = MessageBox( nullptr, buffer, "Assertion Failed - Break Execution?", MB_YESNO | MB_ICONERROR );
                 return ( res == IDYES );
             #endif
         }
         return true; // break execution
     #else
+        (void)message;
+        (void)file;
+        (void)line;
         return true; // break execution
     #endif
 }
@@ -142,6 +145,10 @@ bool IsDebuggerAttached()
 
         return Failure( buffer.Get(), file, line );
     #else
+        (void)message;
+        (void)file;
+        (void)line;
+        (void)fmtString;
         return true; // break execution
     #endif
 }

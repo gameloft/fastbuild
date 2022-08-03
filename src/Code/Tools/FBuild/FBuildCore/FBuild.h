@@ -13,6 +13,7 @@
 
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Singleton.h"
+#include "Core/Process/Mutex.h"
 #include "Core/Strings/AString.h"
 #include "Core/Time/Timer.h"
 
@@ -33,7 +34,7 @@ class FBuild : public Singleton< FBuild >
 {
 public:
     explicit FBuild( const FBuildOptions & options = FBuildOptions() );
-    ~FBuild();
+    virtual ~FBuild();
 
     // initialize the dependency graph, using the BFF config file
     // OR a previously saved NodeGraph DB (if available/matching the BFF)
@@ -43,7 +44,7 @@ public:
     bool Build( const char * target );
     bool Build( const AString & target );
     bool Build( const Array< AString > & targets );
-    bool Build( Node * nodeToBuild );
+    virtual bool Build( Node * nodeToBuild ); // Virtual to allow for testing
 
     // after a build we can store progress/parsed rules for next time
     bool SaveDependencyGraph( const char * nodeGraphDBFile ) const;
@@ -65,7 +66,6 @@ public:
     bool DisplayDependencyDB( const Array< AString > & targets ) const;
     bool GenerateDotGraph( const Array< AString > & targets, const bool fullGraph ) const;
     bool GenerateCompilationDatabase( const Array< AString > & targets ) const;
-	void GetDataPath(AString & path) const; //[GL] Add to modify to relative path when Python is the compiler
 
     class EnvironmentVarAndHash
     {
@@ -111,6 +111,8 @@ public:
     bool CacheOutputInfo() const;
     bool CacheTrim() const;
 
+    uint32_t GetNumWorkerConnections() const;
+
 protected:
     bool GetTargets( const Array< AString > & targets, Dependencies & outDeps ) const;
 
@@ -121,6 +123,7 @@ protected:
 
     NodeGraph * m_DependencyGraph;
     JobQueue * m_JobQueue;
+    mutable Mutex m_ClientLifetimeMutex;
     Client * m_Client; // manage connections to worker servers
 
     AString m_DependencyGraphFile;

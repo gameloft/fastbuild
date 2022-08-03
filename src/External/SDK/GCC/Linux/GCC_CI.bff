@@ -45,6 +45,7 @@ Compiler( 'Compiler-GCC' )
 
     .CompilerOptions                = ' -std=c++11 $CommonCompilerOptions$'
                                     + ' -Wno-invalid-offsetof' // we get the offset of members in non-POD types
+                                    + ' -fdiagnostics-color=auto'
     .CompilerOptionsC               = ' -x c $CommonCompilerOptions$'
 
     // Librarian

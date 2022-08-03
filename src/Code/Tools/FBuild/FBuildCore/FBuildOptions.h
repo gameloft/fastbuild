@@ -68,10 +68,7 @@ public:
     bool        m_CacheInfo                         = false;
     bool        m_CacheVerbose                      = false;
     uint32_t    m_CacheTrim                         = 0;
-    int32_t     m_CacheCompressionLevel             = -1; // See Compresssor.h
-
-    // Worker Connection Limit
-    uint32_t     m_WorkerLimit                       = 15; 
+    int16_t     m_CacheCompressionLevel             = -1; // See Compresssor.h
 
     // Distributed Compilation
     bool        m_AllowDistributed                  = false;
@@ -79,6 +76,7 @@ public:
     bool        m_NoLocalConsumptionOfRemoteJobs    = false;
     bool        m_AllowLocalRace                    = true;
     uint16_t    m_DistributionPort                  = Protocol::PROTOCOL_PORT;
+    int16_t     m_DistributionCompressionLevel      = -1; // See Compresssor.h
 
     // General Output
     bool        m_ShowVerbose                       = false;

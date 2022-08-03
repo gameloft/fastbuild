@@ -5,12 +5,12 @@
 // Includes
 //------------------------------------------------------------------------------
 #include "Function.h"
+#include <Tools/FBuild/FBuildCore/Graph/ObjectNode.h>
 
 // Forward Declarations
 //------------------------------------------------------------------------------
 class CompilerNode;
 class Dependencies;
-class ObjectNode;
 
 // FunctionObjectList
 //------------------------------------------------------------------------------
@@ -28,7 +28,7 @@ protected:
     // helpers
     friend class ObjectNode; // TODO:C Remove
     friend class ObjectListNode; // TODO:C Remove
-    bool    CheckCompilerOptions( const BFFToken * iter, const AString & compilerOptions, const uint32_t objFlags ) const;
+    bool    CheckCompilerOptions( const BFFToken * iter, const AString & compilerOptions, const ObjectNode::CompilerFlags objFlags ) const;
     bool    CheckMSVCPCHFlags_Create( const BFFToken * iter,
                                       const AString & pchOptions,
                                       const AString & pchOutputFile,
@@ -36,10 +36,13 @@ protected:
                                       AString & pchObjectName ) const;
     bool    CheckMSVCPCHFlags_Use( const BFFToken * iter,
                                    const AString & compilerOptions,
-                                   uint32_t objFlags ) const;
+                                   ObjectNode::CompilerFlags objFlags ) const;
 
     friend class TestObjectList;
-    static void GetExtraOutputPaths( const AString & args, AString & pdbPath, AString & asmPath );
+    static void GetExtraOutputPaths( const AString & args,
+                                     AString & outPDBPath, 
+                                     AString & outASMPath,
+                                     AString & outSourceDependenciesPath );
     static void GetExtraOutputPath( const AString * it, const AString * end, const char * option, AString & path );
 };
 

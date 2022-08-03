@@ -13,10 +13,6 @@
 // System
 #include <stdio.h>
 
-#if defined( __APPLE__ ) || defined( __LINUX__ )
-    #define sscanf_s sscanf // TODO:C Tidy this up
-#endif
-
 // CONSTRUCTOR
 //------------------------------------------------------------------------------
 ReflectedProperty::ReflectedProperty( const char * name, uint32_t offset, PropertyType type, bool isArray )
@@ -70,7 +66,7 @@ size_t ReflectedProperty::GetPropertySize() const
         case PT_STRUCT:
         {
             const ReflectedPropertyStruct * rps = static_cast< const ReflectedPropertyStruct * >( this );
-            size_t structSize = rps->GetStructReflectionInfo()->GetStructSize();
+            const size_t structSize = rps->GetStructReflectionInfo()->GetStructSize();
             ASSERT( structSize > 0 );
             return structSize;
         }

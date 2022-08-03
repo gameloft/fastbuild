@@ -67,10 +67,11 @@ REFLECT_NODE_BEGIN( ObjectListNode, Node, MetaNone() )
     #endif
     REFLECT( m_ExtraPDBPath,                        "ExtraPDBPath",                     MetaHidden() )
     REFLECT( m_ExtraASMPath,                        "ExtraASMPath",                     MetaHidden() )
+    REFLECT( m_ExtraSourceDependenciesPath,         "ExtraSourceDependenciesPath",      MetaHidden() )
     REFLECT( m_ObjectListInputStartIndex,           "ObjectListInputStartIndex",        MetaHidden() )
     REFLECT( m_ObjectListInputEndIndex,             "ObjectListInputEndIndex",          MetaHidden() )
-    REFLECT( m_ObjFlags,                            "ObjFlags",                         MetaHidden() )
-    REFLECT( m_ObjFlagsPreprocessor,                "ObjFlagsPreprocessor",             MetaHidden() )
+    REFLECT( m_CompilerFlags.m_Flags,               "ObjFlags",                         MetaHidden() )
+    REFLECT( m_PreprocessorFlags.m_Flags,           "ObjFlagsPreprocessor",             MetaHidden() )
 REFLECT_END( ObjectListNode )
 
 // ObjectListNode
@@ -148,8 +149,8 @@ ObjectListNode::ObjectListNode()
 
         // Check PCH creation command line options
         AStackString<> pchObjectName; // TODO:A Use this
-        const uint32_t pchFlags = ObjectNode::DetermineFlags( compilerNode, m_PCHOptions, true, false );
-        if ( pchFlags & ( ObjectNode::FLAG_MSVC | ObjectNode::FLAG_CLANG_CL ) )
+        const ObjectNode::CompilerFlags pchFlags = ObjectNode::DetermineFlags( compilerNode, m_PCHOptions, true, false );
+        if ( pchFlags.IsMSVC() || pchFlags.IsClangCl() )
         {
             if ( ((FunctionObjectList *)function)->CheckMSVCPCHFlags_Create( iter, m_PCHOptions, m_PCHOutputFile, GetObjExtension(), pchObjectName ) == false )
             {
@@ -165,7 +166,7 @@ ObjectListNode::ObjectListNode()
         }
 
         // Create the PCH node
-        precompiledHeader = CreateObjectNode( nodeGraph, iter, function, pchFlags, 0, m_PCHOptions, AString::GetEmpty(), AString::GetEmpty(), AString::GetEmpty(), m_PCHOutputFile, m_PCHInputFile, pchObjectName );
+        precompiledHeader = CreateObjectNode( nodeGraph, iter, function, pchFlags, ObjectNode::CompilerFlags(), m_PCHOptions, AString::GetEmpty(), AString::GetEmpty(), AString::GetEmpty(), m_PCHOutputFile, m_PCHInputFile, pchObjectName );
         if ( precompiledHeader == nullptr )
         {
             return false; // CreateObjectNode will have emitted an error
@@ -183,16 +184,19 @@ ObjectListNode::ObjectListNode()
         const bool usingPCH = ( m_PCHOutputFile.IsEmpty() == false );
 
         // Cache flags for compiler and preprocessor
-        m_ObjFlags = ObjectNode::DetermineFlags( compilerNode, m_CompilerOptions, false, usingPCH );
-        m_ObjFlagsPreprocessor = preprocessorNode ? ObjectNode::DetermineFlags( preprocessorNode, m_PreprocessorOptions, false, usingPCH ) : 0;
+        m_CompilerFlags = ObjectNode::DetermineFlags( compilerNode, m_CompilerOptions, false, usingPCH );
+        if ( preprocessorNode )
+        {
+            m_PreprocessorFlags = ObjectNode::DetermineFlags( preprocessorNode, m_PreprocessorOptions, false, usingPCH );
+        }
 
         // Check validity of PCH setup
         if ( usingPCH )
         {
             // Check for correct PCH usage options
-            if ( m_ObjFlags & ( ObjectNode::FLAG_MSVC | ObjectNode::FLAG_CLANG_CL ) )
+            if ( m_CompilerFlags.IsMSVC() || m_CompilerFlags.IsClangCl() )
             {
-                if ( ((FunctionObjectList *)function)->CheckMSVCPCHFlags_Use( iter, m_CompilerOptions, m_ObjFlags ) == false )
+                if ( ((FunctionObjectList *)function)->CheckMSVCPCHFlags_Use( iter, m_CompilerOptions, m_CompilerFlags ) == false )
                 {
                     return false; // CheckMSVCPCHFlags_Use will have emitted an error
                 }
@@ -209,7 +213,7 @@ ObjectListNode::ObjectListNode()
                 const Node * node = nodeGraph.FindNode( m_PCHOutputFile );
                 if ( ( node == nullptr ) ||
                      ( node->GetType() != Node::OBJECT_NODE ) ||
-                     ( node->CastTo<ObjectNode>()->GetFlag( ObjectNode::FLAG_CREATING_PCH ) == false ) )
+                     ( node->CastTo<ObjectNode>()->GetCompilerFlags().IsCreatingPCH() == false ) )
                 {
                     // PCH was not defined
                     Error::Error_1104_TargetNotDefined( iter, function, "PCHOutputFile", m_PCHOutputFile );
@@ -220,7 +224,7 @@ ObjectListNode::ObjectListNode()
         }
 
         // .CompilerOptions
-        if ( ((FunctionObjectList *)function)->CheckCompilerOptions( iter, m_CompilerOptions, m_ObjFlags ) == false )
+        if ( ((FunctionObjectList *)function)->CheckCompilerOptions( iter, m_CompilerOptions, m_CompilerFlags ) == false )
         {
             return false; // CheckCompilerOptions will have emitted an error
         }
@@ -306,7 +310,10 @@ ObjectListNode::ObjectListNode()
     }
 
     // Extra output paths
-    ((FunctionObjectList *)function)->GetExtraOutputPaths( m_CompilerOptions, m_ExtraPDBPath, m_ExtraASMPath );
+    ((FunctionObjectList *)function)->GetExtraOutputPaths( m_CompilerOptions,
+                                                           m_ExtraPDBPath,
+                                                           m_ExtraASMPath,
+                                                           m_ExtraSourceDependenciesPath );
 
     // Store dependencies
     m_StaticDependencies.SetCapacity( compilerInputPath.GetSize() +
@@ -346,7 +353,7 @@ ObjectListNode::~ObjectListNode() = default;
     // Handle converting all static inputs into dynamic onces (i.e. cpp->obj)
     for ( size_t i=m_ObjectListInputStartIndex; i<m_ObjectListInputEndIndex; ++i )
     {
-        Dependency & dep = m_StaticDependencies[ i ];
+        const Dependency & dep = m_StaticDependencies[ i ];
 
         // is this a dir list?
         if ( dep.GetNode()->GetType() == Node::DIRECTORY_LIST_NODE )
@@ -537,6 +544,15 @@ ObjectListNode::~ObjectListNode() = default;
         }
     }
 
+    if ( m_ExtraSourceDependenciesPath.IsEmpty() == false )
+    {
+        if ( !FileIO::EnsurePathExists( m_ExtraSourceDependenciesPath ) )
+        {
+            FLOG_ERROR( "Failed to create folder for /sourceDependencies file '%s'", m_ExtraSourceDependenciesPath.Get() );
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -698,44 +714,21 @@ bool ObjectListNode::CreateDynamicObjectNode( NodeGraph & nodeGraph,
     // Create an ObjectNode to compile the above file
     // and depend on that
     Node * on = nodeGraph.FindNode( objFile );
-	//[GL] Add to fix Similar file name, different extension compilation issue of GL-Fastbuild-development
-	const ObjectNode* objNode = on != nullptr ? on->CastTo< ObjectNode >() : nullptr;
-    
-    if (objNode && objNode->GetSourceFile()->GetName().Compare(inputFileName) != 0)
-    {
-        const char * lastSlash = inputFileName.FindLast( NATIVE_SLASH );
-        lastSlash = lastSlash ? ( lastSlash + 1 ) : inputFileName.Get();
-
-        const char * lastDot = m_CompilerOutputKeepBaseExtension ? inputFileName.GetEnd() : inputFileName.FindLast( '.' );
-        lastDot = lastDot && ( lastDot > lastSlash ) ? lastDot : inputFileName.GetEnd();
-
-        const char * extension = inputFileName.FindLast( '.' );
-        uint32_t exthash = xxHash::Calc32(lastDot,strlen(extension));
-
-        AString dupFileEnd;
-        dupFileEnd.AppendFormat("_%u",exthash);
-
-        dupFileEnd += objNode->GetObjExtension();
-        objFile.Replace(objNode->GetObjExtension(),dupFileEnd.Get());
-        FLOG_BUILD_REASON("%s for source file %s\n",objFile.Get(),inputFileName.Get());
-        on = nodeGraph.FindNode( objFile );
-
-    }
     if ( on == nullptr )
     {
         // Handle Unity modification of flags
-        uint32_t flags = m_ObjFlags;
+        ObjectNode::CompilerFlags flags = m_CompilerFlags;
         if ( isUnityNode )
         {
-            flags |= ObjectNode::FLAG_UNITY;
+            flags.Set( ObjectNode::CompilerFlags::FLAG_UNITY );
         }
         if ( isIsolatedFromUnityNode )
         {
-            flags |= ObjectNode::FLAG_ISOLATED_FROM_UNITY;
+            flags.Set( ObjectNode::CompilerFlags::FLAG_ISOLATED_FROM_UNITY );
         }
 
         const BFFToken * token = nullptr;
-        ObjectNode * objectNode = CreateObjectNode( nodeGraph, token, nullptr, flags, m_ObjFlagsPreprocessor, m_CompilerOptions, m_CompilerOptionsDeoptimized, m_Preprocessor, m_PreprocessorOptions, objFile, inputFileName, AString::GetEmpty() );
+        ObjectNode * objectNode = CreateObjectNode( nodeGraph, token, nullptr, flags, m_PreprocessorFlags, m_CompilerOptions, m_CompilerOptionsDeoptimized, m_Preprocessor, m_PreprocessorOptions, objFile, inputFileName, AString::GetEmpty() );
         if ( !objectNode )
         {
             FLOG_ERROR( "Failed to create node '%s'!", objFile.Get() );
@@ -778,8 +771,8 @@ bool ObjectListNode::CreateDynamicObjectNode( NodeGraph & nodeGraph,
 ObjectNode * ObjectListNode::CreateObjectNode( NodeGraph & nodeGraph,
                                                const BFFToken * iter,
                                                const Function * function,
-                                               const uint32_t flags,
-                                               const uint32_t preprocessorFlags,
+                                               const ObjectNode::CompilerFlags flags,
+                                               const ObjectNode::CompilerFlags preprocessorFlags,
                                                const AString & compilerOptions,
                                                const AString & compilerOptionsDeoptimized,
                                                const AString & preprocessor,
@@ -795,7 +788,7 @@ ObjectNode * ObjectListNode::CreateObjectNode( NodeGraph & nodeGraph,
     node->m_CompilerInputFile = objectInput;
     node->m_CompilerOutputExtension = m_CompilerOutputExtension;
     node->m_PCHObjectFileName = pchObjectName;
-    if ( flags & ObjectNode::FLAG_CREATING_PCH )
+    if ( flags.IsCreatingPCH() )
     {
         // Precompiled headers are never de-optimized
         node->m_DeoptimizeWritableFiles = false;
@@ -813,7 +806,7 @@ ObjectNode * ObjectListNode::CreateObjectNode( NodeGraph & nodeGraph,
     node->m_PrecompiledHeader = m_PrecompiledHeaderName;
     node->m_Preprocessor = preprocessor;
     node->m_PreprocessorOptions = preprocessorOptions;
-    node->m_Flags = flags;
+    node->m_CompilerFlags = flags;
     node->m_PreprocessorFlags = preprocessorFlags;
     node->m_OwnerObjectList = m_Name;
 

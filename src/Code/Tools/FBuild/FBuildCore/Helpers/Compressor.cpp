@@ -38,8 +38,9 @@ Compressor::~Compressor()
 
 // IsValidData
 //------------------------------------------------------------------------------
-bool Compressor::IsValidData( const void * data, size_t dataSize ) const
+/*static*/ bool Compressor::IsValidData( const void * data, size_t dataSize )
 {
+    ASSERT( data );
     const Header * header = (const Header *)data;
     if ( header->m_CompressionType > 1 )
     {
@@ -54,6 +55,18 @@ bool Compressor::IsValidData( const void * data, size_t dataSize ) const
         return false;
     }
     return true;
+}
+
+// GetUncompressedSize
+//------------------------------------------------------------------------------
+/*static*/ uint32_t Compressor::GetUncompressedSize( const void * data, size_t dataSize )
+{
+    // Only valid to call on data that is known to be compressor format
+    ASSERT( IsValidData( data, dataSize ) );
+    (void)dataSize;
+
+    const Header * header = (const Header *)data;
+    return header->m_UncompressedSize;
 }
 
 // Compress
@@ -131,7 +144,7 @@ bool Compressor::Decompress( const void * data )
     if ( header->m_CompressionType == 0 )
     {
         m_Result = ALLOC( header->m_UncompressedSize );
-        memcpy( m_Result, (char *)data + sizeof( Header ), header->m_UncompressedSize );
+        memcpy( m_Result, (const char *)data + sizeof( Header ), header->m_UncompressedSize );
         m_ResultSize = header->m_UncompressedSize;
         return true;
     }

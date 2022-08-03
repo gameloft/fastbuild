@@ -29,7 +29,6 @@ files = []
 get_files_recurse(os.path.join("..", "Code"), files)
 get_files_recurse(os.path.join("..", "External"), files)
 get_files_recurse(os.path.join("..", "Scripts"), files)
-files.append(os.path.join("..", ".travis.yml"))
 files.append(os.path.join("..", "pull_request_template.md"))
 
 print('Copying...')
@@ -76,12 +75,30 @@ for file in files:
     try:
         dst_filetime = os.path.getmtime(dst_file)
     except:
-        print(' FAILED: get time')
+        pass # file might be new
+
+    should_copy = False
 
     # needs copying?
-    if src_filetime != dst_filetime:
-        # YES
-        print('COPY: {} -> {}'.format(src_file, dst_file))
+    if dst_filetime == 0:
+        # Destination missing
+        should_copy = True
+    elif src_filetime != dst_filetime:
+        # Modtime changed, but is file actually different?
+        src_size = os.path.getsize(src_file)
+        dst_size = os.path.getsize(dst_file)
+        if  src_size != dst_size:
+            # Size is different
+            should_copy = True
+        else:
+            # Compare contents
+            src_contents = open(src_file, "rb").read(src_size)
+            dst_contents = open(dst_file, "rb").read(dst_size)
+            if src_contents != dst_contents:
+                should_copy = True
+
+    if should_copy:
+        print('COPY: {}'.format(src_file))
 
         # Create dest dir if needed
         dst_path = os.path.dirname(os.path.normpath(dst_file))
@@ -92,9 +109,36 @@ for file in files:
         try:
             os.chmod(dst_file, stat.S_IWRITE)
         except:
-            print(' FAILED: grant writable')
+            pass
 
         # copy file
         shutil.copy2(src_file, dst_path)
+
+print('Pruning...')
+dst_files = []
+get_files_recurse(os.path.join("..", "..", "..", "git", "fastbuild", "Code"), dst_files)
+get_files_recurse(os.path.join("..", "..", "..", "git", "fastbuild", "External"), dst_files)
+get_files_recurse(os.path.join("..", "..", "..", "git", "fastbuild", "Scripts"), dst_files)
+for file in dst_files:
+    dst_file = file
+
+    # ignore git repo files
+    if dst_file.find(".git") != -1:
+        continue
+
+    # ignore SDK contents (but still consider bff files)
+    if dst_file.find(os.path.join("External", "SDK")) != -1:
+        if dst_file.endswith(".bff") == False:
+            continue
+
+    # create source path to match dst path
+    src_file = dst_file.replace(os.path.join("..", "..", "..", "git", "fastbuild"),
+                                os.path.join(".."))
+
+    # does source file exist?
+    if os.path.exists(src_file) == False:
+        # delete dst file
+        print('DELETE: {}'.format(dst_file))
+        os.remove(dst_file)
 
 print('Done.')

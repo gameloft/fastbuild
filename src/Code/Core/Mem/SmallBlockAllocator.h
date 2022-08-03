@@ -14,11 +14,12 @@
     #define __has_feature( ... ) 0
 #endif
 #if !__has_feature( address_sanitizer ) && !__has_feature( memory_sanitizer ) && !defined( __SANITIZE_ADDRESS__ )
-    // #define SMALL_BLOCK_ALLOCATOR_ENABLED //[GL] Add to fix Line Limit Exceeded
+    #define SMALL_BLOCK_ALLOCATOR_ENABLED
 #endif
 
 // Includes
 //------------------------------------------------------------------------------
+#include "Core/Env/Assert.h"
 #include "Core/Mem/MemPoolBlock.h"
 #include "Core/Process/Mutex.h"
 
@@ -72,7 +73,7 @@
 
         // Single Threaded Mode
         static bool         s_ThreadSafeAllocs;
-        #if defined( DEBUG )
+        #if defined( ASSERTS_ENABLED )
             // When in single-threaded mode, catch unsafe use
             static uint64_t s_ThreadSafeAllocsDebugOwnerThread;
         #endif

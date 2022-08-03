@@ -6,6 +6,7 @@
 #include "Tools/FBuild/FBuildTest/Tests/FBuildTest.h"
 
 #include "Tools/FBuild/FBuildCore/FBuild.h"
+#include "Tools/FBuild/FBuildCore/Graph/ObjectNode.h"
 #include "Tools/FBuild/FBuildCore/Protocol/Protocol.h"
 #include "Tools/FBuild/FBuildCore/Protocol/Server.h"
 #include "Tools/FBuild/FBuildCore/WorkerPool/Job.h"
@@ -16,8 +17,6 @@
 
 // Defines
 //------------------------------------------------------------------------------
-#define TEST_PROTOCOL_PORT ( Protocol::PROTOCOL_PORT + 1 ) // Avoid conflict with real worker
-
 #if !defined( __has_feature )
     #define __has_feature( ... ) 0
 #endif
@@ -35,6 +34,9 @@ private:
     void RegressionTest_RemoteCrashOnErrorFormatting();
     void TestLocalRace();
     void RemoteRaceWinRemote();
+    #if defined( DEBUG )
+        void RemoteRaceSystemFailure();
+    #endif
     void AnonymousNamespaces();
     void ErrorsAreCorrectlyReported_MSVC() const;
     void ErrorsAreCorrectlyReported_Clang() const;
@@ -61,6 +63,9 @@ REGISTER_TESTS_BEGIN( TestDistributed )
     REGISTER_TEST( RegressionTest_RemoteCrashOnErrorFormatting )
     REGISTER_TEST( TestLocalRace )
     REGISTER_TEST( RemoteRaceWinRemote )
+    #if defined( DEBUG )
+        REGISTER_TEST( RemoteRaceSystemFailure )
+    #endif
     REGISTER_TEST( AnonymousNamespaces )
     REGISTER_TEST( ShutdownMemoryLeak )
     #if defined( __WINDOWS__ )
@@ -86,14 +91,14 @@ void TestDistributed::TestHelper( const char * target, uint32_t numRemoteWorkers
     options.m_NoLocalConsumptionOfRemoteJobs = true; // ensure all jobs happen on the remote worker
     options.m_AllowLocalRace = allowRace;
     options.m_EnableMonitor = true; // make sure monitor code paths are tested as well
-    options.m_DistributionPort = TEST_PROTOCOL_PORT;
+    options.m_DistributionPort = Protocol::PROTOCOL_TEST_PORT;
     FBuild fBuild( options );
 
     TEST_ASSERT( fBuild.Initialize() );
 
     // start a client to emulate the other end
     Server s( numRemoteWorkers );
-    s.Listen( TEST_PROTOCOL_PORT );
+    s.Listen( Protocol::PROTOCOL_TEST_PORT );
 
     // clean up anything left over from previous runs
     Array< AString > files;
@@ -110,7 +115,7 @@ void TestDistributed::TestHelper( const char * target, uint32_t numRemoteWorkers
         TEST_ASSERT( FileIO::FileExists( target ) == false );
     }
 
-    bool pass = fBuild.Build( target );
+    const bool pass = fBuild.Build( target );
     if ( !shouldFail )
     {
         TEST_ASSERT( pass );
@@ -185,17 +190,54 @@ void TestDistributed::RemoteRaceWinRemote()
     options.m_ForceCleanBuild = true;
     options.m_EnableMonitor = true; // make sure monitor code paths are tested as well
     options.m_NoLocalConsumptionOfRemoteJobs = true;
-    options.m_DistributionPort = TEST_PROTOCOL_PORT;
+    options.m_DistributionPort = Protocol::PROTOCOL_TEST_PORT;
     FBuild fBuild( options );
 
     TEST_ASSERT( fBuild.Initialize() );
 
     // start a client to emulate the other end
     Server s( 1 );
-    s.Listen( TEST_PROTOCOL_PORT );
+    s.Listen( Protocol::PROTOCOL_TEST_PORT );
 
     TEST_ASSERT( fBuild.Build( "RemoteRaceWinRemote" ) );
 }
+
+// RemoteRaceSystemFailure
+//------------------------------------------------------------------------------
+#if defined( ENABLE_FAKE_SYSTEM_FAILURE )
+void TestDistributed::RemoteRaceSystemFailure()
+{
+    // NOTE: Test only available in DEBUG due to SetFakeSystemFailure
+
+    // Check that a remote race that is won remotely with a failure is
+    // correctly handled
+    FBuildTestOptions options;
+    options.m_ConfigFile = "Tools/FBuild/FBuildTest/Data/TestDistributed/RemoteRaceSystemFailure/fbuild.bff";
+    options.m_AllowDistributed = true;
+    options.m_NumWorkerThreads = 1;
+    options.m_ForceCleanBuild = true;
+    options.m_EnableMonitor = true; // make sure monitor code paths are tested as well
+    options.m_NoLocalConsumptionOfRemoteJobs = true;
+    options.m_DistributionPort = Protocol::PROTOCOL_TEST_PORT;
+    options.m_DistVerbose = true;
+    FBuild fBuild( options );
+
+    TEST_ASSERT( fBuild.Initialize() );
+
+    // start a client to emulate the other end
+    Server s( 1 );
+    s.Listen( Protocol::PROTOCOL_TEST_PORT );
+
+    // Force a system failure when compiling remotely
+    ObjectNode::SetFakeSystemFailureForNextJob();
+
+    // Build
+    TEST_ASSERT( fBuild.Build( "RemoteRaceSystemFailure" ) );
+
+    // Ensure the remote failure was induced correctly
+    TEST_ASSERT( GetRecordedOutput().Find( "Injecting system failure (sFakeSystemFailure)" ) );
+}
+#endif
 
 // AnonymousNamespaces
 //------------------------------------------------------------------------------
@@ -229,14 +271,14 @@ void TestDistributed::ErrorsAreCorrectlyReported_MSVC() const
     options.m_AllowLocalRace = false;
     options.m_ForceCleanBuild = true;
     options.m_EnableMonitor = true; // make sure monitor code paths are tested as well
-    options.m_DistributionPort = TEST_PROTOCOL_PORT;
+    options.m_DistributionPort = Protocol::PROTOCOL_TEST_PORT;
 
     FBuild fBuild( options );
     TEST_ASSERT( fBuild.Initialize() );
 
     // start a client to emulate the other end
     Server s( 1 );
-    s.Listen( TEST_PROTOCOL_PORT );
+    s.Listen( Protocol::PROTOCOL_TEST_PORT );
 
     // Check that build fails
     TEST_ASSERT( false == fBuild.Build( "ErrorsAreCorrectlyReported-MSVC" ) );
@@ -257,14 +299,14 @@ void TestDistributed::ErrorsAreCorrectlyReported_Clang() const
     options.m_AllowLocalRace = false;
     options.m_ForceCleanBuild = true;
     options.m_EnableMonitor = true; // make sure monitor code paths are tested as well
-    options.m_DistributionPort = TEST_PROTOCOL_PORT;
+    options.m_DistributionPort = Protocol::PROTOCOL_TEST_PORT;
 
     FBuild fBuild( options );
     TEST_ASSERT( fBuild.Initialize() );
 
     // start a client to emulate the other end
     Server s( 1 );
-    s.Listen( TEST_PROTOCOL_PORT );
+    s.Listen( Protocol::PROTOCOL_TEST_PORT );
 
     // Check that build fails
     TEST_ASSERT( false == fBuild.Build( "ErrorsAreCorrectlyReported-Clang" ) );
@@ -285,14 +327,14 @@ void TestDistributed::WarningsAreCorrectlyReported_MSVC() const
     options.m_AllowLocalRace = false;
     options.m_ForceCleanBuild = true;
     options.m_EnableMonitor = true; // make sure monitor code paths are tested as well
-    options.m_DistributionPort = TEST_PROTOCOL_PORT;
+    options.m_DistributionPort = Protocol::PROTOCOL_TEST_PORT;
 
     FBuild fBuild( options );
     TEST_ASSERT( fBuild.Initialize() );
 
     // start a client to emulate the other end
     Server s( 1 );
-    s.Listen( TEST_PROTOCOL_PORT );
+    s.Listen( Protocol::PROTOCOL_TEST_PORT );
 
     // Check that build passes
     TEST_ASSERT( fBuild.Build( "WarningsAreCorrectlyReported-MSVC" ) );
@@ -313,14 +355,14 @@ void TestDistributed::WarningsAreCorrectlyReported_Clang() const
     options.m_AllowLocalRace = false;
     options.m_ForceCleanBuild = true;
     options.m_EnableMonitor = true; // make sure monitor code paths are tested as well
-    options.m_DistributionPort = TEST_PROTOCOL_PORT;
+    options.m_DistributionPort = Protocol::PROTOCOL_TEST_PORT;
 
     FBuild fBuild( options );
     TEST_ASSERT( fBuild.Initialize() );
 
     // start a client to emulate the other end
     Server s( 1 );
-    s.Listen( TEST_PROTOCOL_PORT );
+    s.Listen( Protocol::PROTOCOL_TEST_PORT );
 
     // Check that build passes
     TEST_ASSERT( fBuild.Build( "WarningsAreCorrectlyReported-Clang" ) );
@@ -344,7 +386,7 @@ void TestDistributed::ShutdownMemoryLeak() const
     options.m_AllowLocalRace = false;
     options.m_ForceCleanBuild = true;
     options.m_EnableMonitor = true; // make sure monitor code paths are tested as well
-    options.m_DistributionPort = TEST_PROTOCOL_PORT;
+    options.m_DistributionPort = Protocol::PROTOCOL_TEST_PORT;
 
     // Init
     FBuild fBuild( options );
@@ -359,11 +401,12 @@ void TestDistributed::ShutdownMemoryLeak() const
         static uint32_t AbortBuild( void * data )
         {
             // Wait until some distributed jobs are available
-            Timer t;
-            float timeout = 5.0f;
+            const Timer t;
             #if __has_feature( thread_sanitizer ) || defined( __SANITIZE_THREAD__ )
                 // Code under ThreadSanitizer runs several time slower than normal, so we need a larger timeout.
-                timeout = 30.0f;
+                const float timeout = 30.0f;
+            #else
+                const float timeout = 5.0f;
             #endif
             while ( t.GetElapsed() < timeout )
             {
@@ -405,14 +448,14 @@ void TestDistributed::TestZiDebugFormat() const
     options.m_AllowLocalRace = false;
     options.m_ForceCleanBuild = true;
     options.m_EnableMonitor = true; // make sure monitor code paths are tested as well
-    options.m_DistributionPort = TEST_PROTOCOL_PORT;
+    options.m_DistributionPort = Protocol::PROTOCOL_TEST_PORT;
     FBuild fBuild( options );
 
     TEST_ASSERT( fBuild.Initialize() );
 
     // start a client to emulate the other end
     Server s( 1 );
-    s.Listen( TEST_PROTOCOL_PORT );
+    s.Listen( Protocol::PROTOCOL_TEST_PORT );
 
     TEST_ASSERT( fBuild.Build( "remoteZi" ) );
 }
@@ -426,14 +469,14 @@ void TestDistributed::TestZiDebugFormat_Local() const
     options.m_AllowDistributed = true;
     options.m_ForceCleanBuild = true;
     options.m_EnableMonitor = true; // make sure monitor code paths are tested as well
-    options.m_DistributionPort = TEST_PROTOCOL_PORT;
+    options.m_DistributionPort = Protocol::PROTOCOL_TEST_PORT;
     FBuild fBuild( options );
 
     TEST_ASSERT( fBuild.Initialize() );
 
     // start a client to emulate the other end
     Server s( 1 );
-    s.Listen( TEST_PROTOCOL_PORT );
+    s.Listen( Protocol::PROTOCOL_TEST_PORT );
 
     TEST_ASSERT( fBuild.Build( "remoteZi" ) );
 }
@@ -450,14 +493,14 @@ void TestDistributed::D8049_ToolLongDebugRecord() const
     options.m_AllowLocalRace = false;
     options.m_ForceCleanBuild = true;
     options.m_EnableMonitor = true; // make sure monitor code paths are tested as well
-    options.m_DistributionPort = TEST_PROTOCOL_PORT;
+    options.m_DistributionPort = Protocol::PROTOCOL_TEST_PORT;
     FBuild fBuild( options );
 
     TEST_ASSERT( fBuild.Initialize() );
 
     // start a client to emulate the other end
     Server s( 1 );
-    s.Listen( TEST_PROTOCOL_PORT );
+    s.Listen( Protocol::PROTOCOL_TEST_PORT );
 
     TEST_ASSERT( fBuild.Build( "D8049" ) );
 }

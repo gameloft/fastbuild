@@ -25,6 +25,7 @@ REFLECT_NODE_BEGIN( CompilerNode, Node, MetaNone() )
     REFLECT( m_ForceResponseFile,   "ForceResponseFile",    MetaOptional() )
     REFLECT( m_VS2012EnumBugFix,    "VS2012EnumBugFix",     MetaOptional() )
     REFLECT( m_ClangRewriteIncludes, "ClangRewriteIncludes", MetaOptional() )
+    REFLECT( m_ClangGCCUpdateXLanguageArg, "ClangGCCUpdateXLanguageArg",  MetaOptional() )
     REFLECT( m_ClangFixupUnity_Disable, "ClangFixupUnity_Disable", MetaOptional() )
     REFLECT( m_ExecutableRootPath,  "ExecutableRootPath",   MetaOptional() + MetaPath() )
     REFLECT( m_SimpleDistributionMode,  "SimpleDistributionMode",   MetaOptional() )
@@ -48,6 +49,7 @@ CompilerNode::CompilerNode()
     , m_ForceResponseFile( false )
     , m_VS2012EnumBugFix( false )
     , m_ClangRewriteIncludes( true )
+    , m_ClangGCCUpdateXLanguageArg( false )
     , m_ClangFixupUnity_Disable( false )
     , m_CompilerFamilyString( "auto" )
     , m_CompilerFamilyEnum( static_cast< uint8_t >( CUSTOM ) )
@@ -276,14 +278,7 @@ bool CompilerNode::InitializeCompilerFamily( const BFFToken * iter, const Functi
             return true;
         }
 
-        //[GL] Add Handle Python as External Compiler
-		if ( compiler.EndsWithI( "python.exe" ) )
-	    {
-		    m_CompilerFamilyEnum = PYTHON;
-            return true;
-	    }
-		
-		// Auto-detect failed
+        // Auto-detect failed
         Error::Error_1500_CompilerDetectionFailed( iter, function, compiler );
         return false;
     }

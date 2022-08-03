@@ -39,7 +39,6 @@
 #include "Core/Strings/AStackString.h"
 #include "Core/Tracing/Tracing.h"
 #include "Core/Process/Process.h"
-#include <memory.h>  //[GL] Add to fix fatal error: use of undeclared identifier 'memset' on MACOS
 
 #include <stdio.h>
 #include <time.h>
@@ -176,8 +175,7 @@ bool FBuild::Initialize( const char * nodeGraphDBFile )
 
     SmallBlockAllocator::SetSingleThreadedMode( false );
 
-    m_JobQueue = FNEW(JobQueue(m_Options.m_NumWorkerThreads)); //[GL] Add to fix A9 can not strip so
-	if ( m_DependencyGraph == nullptr )
+    if ( m_DependencyGraph == nullptr )
     {
         return false;
     }
@@ -290,13 +288,7 @@ bool FBuild::Build( const Array< AString > & targets )
     }
     proxy.m_StaticDependencies = deps;
 
-    if (!m_JobQueue) //[GL] Add to fix A9 can not strip so
-	{
-		// create worker threads
-		m_JobQueue = FNEW(JobQueue(m_Options.m_NumWorkerThreads));
-	}
-	
-	// build all targets in one sweep
+    // build all targets in one sweep
     const bool result = Build( &proxy );
 
     // output per-target results
@@ -380,18 +372,15 @@ void FBuild::SaveDependencyGraph( IOStream & stream, const char* nodeGraphDBFile
 
 // Build
 //------------------------------------------------------------------------------
-bool FBuild::Build( Node * nodeToBuild )
+/*virtual*/ bool FBuild::Build( Node * nodeToBuild )
 {
     ASSERT( nodeToBuild );
 
     AtomicStoreRelaxed( &s_StopBuild, false ); // allow multiple runs in same process
     AtomicStoreRelaxed( &s_AbortBuild, false ); // allow multiple runs in same process
 
-    if (!m_JobQueue) //[GL] Add to fix A9 can not strip so
-	{
-		// create worker threads
-		m_JobQueue = FNEW( JobQueue( m_Options.m_NumWorkerThreads ) );
-	}
+    // create worker threads
+    m_JobQueue = FNEW( JobQueue( m_Options.m_NumWorkerThreads ) );
 
     // create the connection management system if needed
     // (must be after JobQueue is created)
@@ -467,8 +456,11 @@ bool FBuild::Build( Node * nodeToBuild )
                 if ( stopping == false )
                 {
                     // free the network distribution system (if there is one)
-                    FDELETE m_Client;
-                    m_Client = nullptr;
+                    {
+                        MutexHolder mh( m_ClientLifetimeMutex );
+                        FDELETE m_Client;
+                        m_Client = nullptr;
+                    }
 
                     // wait for workers to exit.  Can still be building even though we've failed:
                     //  - only 1 failed node propagating up to root while others are not yet complete
@@ -729,15 +721,6 @@ void FBuild::UpdateBuildStatus( const Node * node )
     return "fbuild.bff";
 }
 
-// GetDataPath
-//[GL] Add to modify to relative path when Python is the compiler
-//------------------------------------------------------------------------------
-void FBuild::GetDataPath(AString & path) const
-{
-	const SettingsNode * settings = m_DependencyGraph->GetSettings();
-	path = settings->GetDataPath();
-}
-
 // DisplayTargetList
 //------------------------------------------------------------------------------
 void FBuild::DisplayTargetList( bool showHidden ) const
@@ -924,6 +907,14 @@ bool FBuild::CacheTrim() const
 
     OUTPUT( "- Cache not configured\n" );
     return false;
+}
+
+// GetNumWorkerConnections
+//------------------------------------------------------------------------------
+uint32_t FBuild::GetNumWorkerConnections() const
+{
+    MutexHolder mh( m_ClientLifetimeMutex );
+    return (uint32_t)( m_Client ? m_Client->GetNumConnections() : 0 );
 }
 
 //------------------------------------------------------------------------------

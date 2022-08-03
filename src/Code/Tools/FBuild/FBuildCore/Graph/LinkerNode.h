@@ -33,7 +33,6 @@ public:
         LINK_FLAG_GREENHILLS_ELXR = 0x80,
         LINK_FLAG_CODEWARRIOR_LD=0x100,
         LINK_FLAG_WARNINGS_AS_ERRORS_MSVC = 0x200,
-		LINK_FLAG_CLANG = 0x400, //[GL] Add LINK_FLAG_CLANG
     };
 
     inline bool IsADLL() const { return GetFlag( LINK_FLAG_DLL ); }

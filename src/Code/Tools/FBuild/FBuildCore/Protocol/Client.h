@@ -6,12 +6,14 @@
 //------------------------------------------------------------------------------
 #include "Core/Containers/Array.h"
 #include "Core/Network/TCPConnectionPool.h"
+#include "Core/Process/Atomic.h"
 #include "Core/Process/Thread.h"
 #include "Core/Strings/AString.h"
 #include "Core/Time/Timer.h"
 
 // Forward Declarations
 //------------------------------------------------------------------------------
+class ConstMemoryStream;
 class Job;
 class MemoryStream;
 class MultiBuffer;
@@ -19,6 +21,7 @@ namespace Protocol
 {
     class IMessage;
     class MsgJobResult;
+    class MsgJobResultCompressed;
     class MsgRequestJob;
     class MsgRequestManifest;
     class MsgRequestFile;
@@ -43,8 +46,11 @@ private:
 
     void Process( const ConnectionInfo * connection, const Protocol::MsgRequestJob * msg );
     void Process( const ConnectionInfo * connection, const Protocol::MsgJobResult *, const void * payload, size_t payloadSize );
+    void Process( const ConnectionInfo * connection, const Protocol::MsgJobResultCompressed * msg, const void * payload, size_t payloadSize );
     void Process( const ConnectionInfo * connection, const Protocol::MsgRequestManifest * msg );
     void Process( const ConnectionInfo * connection, const Protocol::MsgRequestFile * msg );
+
+    void ProcessJobResultCommon( const ConnectionInfo * connection, bool isCompressed, const void * payload, size_t payloadSize );
 
     const ToolManifest * FindManifest( const ConnectionInfo * connection, uint64_t toolId ) const;
     bool WriteFileToDisk( const AString& fileName, const MultiBuffer & multiBuffer, size_t index ) const;
@@ -58,9 +64,10 @@ private:
     // More verbose name to avoid conflict with windows.h SendMessage
     void            SendMessageInternal( const ConnectionInfo * connection, const Protocol::IMessage & msg );
     void            SendMessageInternal( const ConnectionInfo * connection, const Protocol::IMessage & msg, const MemoryStream & memoryStream );
+    void            SendMessageInternal( const ConnectionInfo * connection, const Protocol::IMessage & msg, const ConstMemoryStream & memoryStream );
 
     Array< AString >    m_WorkerList;   // workers to connect to
-    volatile bool       m_ShouldExit;   // signal from main thread
+    Atomic<bool>        m_ShouldExit;   // signal from main thread
     bool                m_DetailedLogging;
     Thread::ThreadHandle m_Thread;      // the thread to find and manage workers
 

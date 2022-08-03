@@ -272,8 +272,19 @@ bool LightCache::Hash( ObjectNode * node,
 {
     PROFILE_FUNCTION;
 
+    // Check for incompatible args
+    if ( compilerArgs.Find( "-sourceDependencies" ) ||
+         compilerArgs.Find( "/sourceDependencies" ) )
+    {
+        AddError( nullptr, nullptr, "LightCache is incompatible with -sourceDependencies" );
+        outSourceHash = 0;
+        return false;
+    }
+
+    StackArray<AString> forceIncludes;
     ProjectGeneratorBase::ExtractIncludePaths( compilerArgs,
                                                m_IncludePaths,
+                                               forceIncludes,
                                                false ); // escapeQuotes
 
     // Ensure all includes are slash terminated
@@ -284,6 +295,12 @@ bool LightCache::Hash( ObjectNode * node,
             continue;
         }
         includePath += NATIVE_SLASH;
+    }
+
+    // Handle forced includes
+    for ( const AString & forceInclude : forceIncludes )
+    {
+        ProcessInclude( forceInclude, IncludeType::QUOTE );
     }
 
     const AString & rootFileName = node->GetSourceFile()->GetName();

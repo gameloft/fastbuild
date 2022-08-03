@@ -26,23 +26,20 @@
 REFLECT_NODE_BEGIN( SettingsNode, Node, MetaNone() )
     REFLECT_ARRAY(  m_Environment,              "Environment",              MetaOptional() )
     REFLECT(        m_CachePath,                "CachePath",                MetaOptional() )
-	REFLECT(		m_DataPath,					"DataPath",					MetaOptional() ) //[GL] Add to modify to relative path when Python is the compiler
     REFLECT(        m_CachePathMountPoint,      "CachePathMountPoint",      MetaOptional() )
     REFLECT(        m_CachePluginDLL,           "CachePluginDLL",           MetaOptional() )
     REFLECT(        m_CachePluginDLLConfig,     "CachePluginDLLConfig",     MetaOptional() )
     REFLECT_ARRAY(  m_Workers,                  "Workers",                  MetaOptional() )
     REFLECT(        m_WorkerConnectionLimit,    "WorkerConnectionLimit",    MetaOptional() )
     REFLECT(        m_DistributableJobMemoryLimitMiB, "DistributableJobMemoryLimitMiB", MetaOptional() + MetaRange( DIST_MEMORY_LIMIT_MIN, DIST_MEMORY_LIMIT_MAX ) )
-    REFLECT(        m_DisableDBMigration,       "DisableDBMigration",       MetaOptional() )
 REFLECT_END( SettingsNode )
 
 // CONSTRUCTOR
 //------------------------------------------------------------------------------
 SettingsNode::SettingsNode()
 : Node( AString::GetEmpty(), Node::SETTINGS_NODE, Node::FLAG_NONE )
-, m_WorkerConnectionLimit( FBuild::Get().GetOptions().m_WorkerLimit )
+, m_WorkerConnectionLimit( 15 )
 , m_DistributableJobMemoryLimitMiB( DIST_MEMORY_LIMIT_DEFAULT )
-, m_DisableDBMigration( false )
 {
     // Cache path from environment
     Env::GetEnvVariable( "FASTBUILD_CACHE_PATH", m_CachePathFromEnvVar );
@@ -101,13 +98,6 @@ const AString & SettingsNode::GetCachePathMountPoint() const
         return m_CachePathMountPoint;
     }
     return m_CachePathMountPointFromEnvVar;
-}
-
-// GetDataPath
-//------------------------------------------------------------------------------
-const AString & SettingsNode::GetDataPath() const //[GL] Add to modify to relative path when Python is the compiler
-{
-	return m_DataPath;
 }
 
 // GetCachePluginDLL

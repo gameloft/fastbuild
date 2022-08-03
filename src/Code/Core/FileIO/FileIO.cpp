@@ -10,6 +10,7 @@
 #include "Core/Env/ErrorFormat.h"
 #include "Core/FileIO/PathUtils.h"
 #include "Core/Process/Thread.h"
+#include "Core/Math/Conversions.h"
 #include "Core/Profile/Profile.h"
 #include "Core/Strings/AStackString.h"
 #include "Core/Time/Timer.h"
@@ -79,7 +80,7 @@
     PROFILE_FUNCTION;
 #if defined( __WINDOWS__ )
     // see if we can get attributes
-    DWORD attributes = GetFileAttributes( fileName );
+    const DWORD attributes = GetFileAttributes( fileName );
     if ( attributes == INVALID_FILE_ATTRIBUTES )
     {
         return false;
@@ -105,7 +106,7 @@
 /*static*/ bool FileIO::DirectoryDelete( const AString & path )
 {
 #if defined( __WINDOWS__ )
-    BOOL result = RemoveDirectory( path.Get() );
+    const BOOL result = RemoveDirectory( path.Get() );
     if ( result == FALSE )
     {
         return false; // failed to delete
@@ -129,7 +130,7 @@
 {
     PROFILE_FUNCTION;
 #if defined( __WINDOWS__ )
-    BOOL result = DeleteFile( fileName );
+    const BOOL result = DeleteFile( fileName );
     if ( result == FALSE )
     {
         return false; // failed to delete
@@ -252,7 +253,22 @@
         return false;
     }
 
-    ssize_t bytesCopied = sendfile( dest, source, 0, stat_source.st_size );
+    ssize_t bytesCopied = 0;
+    ssize_t offset = 0;
+
+    while ( offset < stat_source.st_size )
+    {
+        // sendfile has an arbitrary limit of 0x7ffff000 on all systems (even if 64bit)
+        const ssize_t remaining = stat_source.st_size - offset;
+        const ssize_t count = Math::Min<ssize_t>( remaining, 0x7ffff000 );
+
+        const ssize_t sent = sendfile( dest, source, &offset, count );
+        if ( sent <= 0 )
+        {
+            break; // Copy failed (incomplete)
+        }
+        bytesCopied += sent;
+    }
 
     close( source );
     close( dest );
@@ -285,7 +301,7 @@
 {
     ASSERT( results );
 
-    size_t oldSize = results->GetSize();
+    const size_t oldSize = results->GetSize();
     if ( recurse )
     {
         // make a copy of the path as it will be modified during recursion
@@ -310,7 +326,7 @@
 {
     ASSERT( results );
 
-    size_t oldSize = results->GetSize();
+    const size_t oldSize = results->GetSize();
     if ( recurse )
     {
         // make a copy of the path as it will be modified during recursion
@@ -364,7 +380,7 @@
 {
     #if defined( __WINDOWS__ )
         char buffer[ MAX_PATH ];
-        DWORD len = GetCurrentDirectory( MAX_PATH, buffer );
+        const DWORD len = GetCurrentDirectory( MAX_PATH, buffer );
         if ( len != 0 )
         {
             output = buffer;
@@ -399,7 +415,7 @@
         // (we'll use the windows directory)
         char otherFolder[ 512 ];
         otherFolder[ 0 ] = 0;
-        UINT len = ::GetWindowsDirectory( otherFolder, 512 );
+        const UINT len = ::GetWindowsDirectory( otherFolder, 512 );
         if ( ( len == 0 ) || ( len > 511 ) )
         {
             return false;
@@ -440,7 +456,7 @@
 {
     #if defined( __WINDOWS__ )
         char buffer[ MAX_PATH ];
-        DWORD len = GetTempPath( MAX_PATH, buffer );
+        const DWORD len = GetTempPath( MAX_PATH, buffer );
         if ( len != 0 )
         {
             output = buffer;
@@ -504,7 +520,7 @@
 /*static*/ bool FileIO::DirectoryExists( const AString & path )
 {
     #if defined( __WINDOWS__ )
-        DWORD res = GetFileAttributes( path.Get() );
+        const DWORD res = GetFileAttributes( path.Get() );
         if ( ( res != INVALID_FILE_ATTRIBUTES ) &&
             ( ( res & FILE_ATTRIBUTE_DIRECTORY ) != 0 ) )
         {
@@ -645,8 +661,8 @@
         WIN32_FILE_ATTRIBUTE_DATA fileAttribs;
         if ( GetFileAttributesEx( fileName.Get(), GetFileExInfoStandard, &fileAttribs ) )
         {
-            FILETIME ftWrite = fileAttribs.ftLastWriteTime;
-            uint64_t lastWriteTime = (uint64_t)ftWrite.dwLowDateTime | ( (uint64_t)ftWrite.dwHighDateTime << 32 );
+            const FILETIME ftWrite = fileAttribs.ftLastWriteTime;
+            const uint64_t lastWriteTime = (uint64_t)ftWrite.dwLowDateTime | ( (uint64_t)ftWrite.dwHighDateTime << 32 );
             return lastWriteTime;
         }
     #elif defined( __APPLE__ )
@@ -673,9 +689,13 @@
 {
     #if defined( __WINDOWS__ )
         // open the file
-        // TOOD:B Check these args
-        HANDLE hFile = CreateFile( fileName.Get(), GENERIC_WRITE, FILE_SHARE_WRITE, nullptr,
-                                   OPEN_EXISTING, 0, nullptr);
+        HANDLE hFile = CreateFile( fileName.Get(),
+                                   FILE_WRITE_ATTRIBUTES,
+                                   FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                   nullptr,
+                                   OPEN_EXISTING,
+                                   0,
+                                   nullptr);
         if ( hFile == INVALID_HANDLE_VALUE )
         {
             return false;
@@ -752,15 +772,15 @@
 {
     #if defined( __WINDOWS__ )
         // see if dst file is read-only
-        DWORD dwAttrs = GetFileAttributes( fileName );
+        const DWORD dwAttrs = GetFileAttributes( fileName );
         if ( dwAttrs == INVALID_FILE_ATTRIBUTES )
         {
             return false; // can't even get the attributes, nothing more we can do
         }
 
         // determine the new attributes
-        DWORD dwNewAttrs = ( readOnly ) ? ( dwAttrs | FILE_ATTRIBUTE_READONLY )
-                                        : ( dwAttrs & (uint32_t)(~FILE_ATTRIBUTE_READONLY) );
+        const DWORD dwNewAttrs = ( readOnly ) ? ( dwAttrs | FILE_ATTRIBUTE_READONLY )
+                                              : ( dwAttrs & (uint32_t)(~FILE_ATTRIBUTE_READONLY) );
 
         // nothing to do if they are the same
         if ( dwNewAttrs == dwAttrs )
@@ -815,14 +835,14 @@
 {
     #if defined( __WINDOWS__ )
         // see if dst file is read-only
-        DWORD dwAttrs = GetFileAttributes( fileName );
+        const DWORD dwAttrs = GetFileAttributes( fileName );
         if ( dwAttrs == INVALID_FILE_ATTRIBUTES )
         {
             return false; // can't even get the attributes, treat as not read only
         }
 
         // determine the new attributes
-        bool readOnly = ( dwAttrs & FILE_ATTRIBUTE_READONLY );
+        const bool readOnly = ( dwAttrs & FILE_ATTRIBUTE_READONLY );
         return readOnly;
     #elif defined( __LINUX__ ) || defined( __APPLE__ )
         struct stat s;
@@ -1388,7 +1408,7 @@
         // This will sometimes fail, but if we retry until it succeeds, we avoid the
         // problem on the subsequent operation.
         FileStream f;
-        Timer timer;
+        const Timer timer;
         while ( f.Open( fileName.Get(), openMode ) == false )
         {
             Thread::Sleep( 1 );

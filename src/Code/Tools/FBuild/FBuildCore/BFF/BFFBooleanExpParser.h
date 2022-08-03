@@ -1,19 +1,20 @@
-// UnitTest.cpp - interface for a unit test
+// BFFBooleanExpParser
 //------------------------------------------------------------------------------
+#pragma once
 
-// Includes
+// Forward Declarations
 //------------------------------------------------------------------------------
-#include "UnitTest.h"
+class BFFTokenRange;
+class Function;
 
-// TestNoReturn
+// BFFBooleanExpParser
 //------------------------------------------------------------------------------
-#if defined( __WINDOWS__ )
-    void TestNoReturn()
-    {
-        #if defined( __clang__ )
-            for (;;) {}
-        #endif
-    }
-#endif
+class BFFBooleanExpParser
+{
+public:
+    static bool Parse( const Function * function,
+                       const BFFTokenRange & range,
+                       bool & expResult );
+};
 
 //------------------------------------------------------------------------------

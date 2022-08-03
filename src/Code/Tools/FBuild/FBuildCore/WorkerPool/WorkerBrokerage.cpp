@@ -53,7 +53,7 @@ void WorkerBrokerage::InitBrokerage()
     }
 
     // brokerage path includes version to reduce unnecessary comms attempts
-    uint32_t protocolVersion = Protocol::PROTOCOL_VERSION;
+    const uint32_t protocolVersion = Protocol::PROTOCOL_VERSION_MAJOR;
 
     // root folder
     AStackString<> brokeragePath;
@@ -162,7 +162,7 @@ void WorkerBrokerage::FindWorkers( Array< AString > & workerList )
     Array< AString > results( 256, true );
     for( AString& root : m_BrokerageRoots )
     {
-        size_t filesBeforeSearch = results.GetSize();
+        const size_t filesBeforeSearch = results.GetSize();
         if ( !FileIO::GetFiles( root,
                                 AStackString<>( "*" ),
                                 false,
@@ -212,7 +212,7 @@ void WorkerBrokerage::SetAvailability( bool available )
     if ( available )
     {
         // Check the last update time to avoid too much File IO.
-        float elapsedTime = m_TimerLastUpdate.GetElapsed();
+        const float elapsedTime = m_TimerLastUpdate.GetElapsed();
         if ( elapsedTime >= sBrokerageAvailabilityUpdateTime )
         {
             // If settings have changed, (re)create the file 
@@ -233,7 +233,7 @@ void WorkerBrokerage::SetAvailability( bool available )
                 Network::GetDomainName( domainName );
 
                 // Resolve host name to ip address
-                uint32_t ip = Network::GetHostIPFromName( hostName );
+                const uint32_t ip = Network::GetHostIPFromName( hostName );
                 if ( ( ip != 0 ) && ( ip != 0x0100007f ) )
                 {
                     TCPConnectionPool::GetAddressAsString( ip, ipAddress );
@@ -374,14 +374,14 @@ void WorkerBrokerage::UpdateBrokerageFilePath()
 {
     if ( !m_BrokerageRoots.IsEmpty() )
     {
-       /* if ( !m_IPAddress.IsEmpty() )
+        if ( !m_IPAddress.IsEmpty() )
         {
             m_BrokerageFilePath.Format( "%s%s", m_BrokerageRoots[0].Get(), m_IPAddress.Get() );
         }
         else
-        {*/
-            m_BrokerageFilePath.Format( "%s%s", m_BrokerageRoots[0].Get(), m_HostName.Get() );//[GL] Use PC name instead IP
-        //}
+        {
+            m_BrokerageFilePath.Format( "%s%s", m_BrokerageRoots[0].Get(), m_HostName.Get() );
+        }
     }
 }
 

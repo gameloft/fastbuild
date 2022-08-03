@@ -3,7 +3,7 @@
 
 // Includes
 //------------------------------------------------------------------------------
-#include "TestFramework/UnitTest.h"
+#include "TestFramework/TestGroup.h"
 
 // main
 //------------------------------------------------------------------------------
@@ -28,10 +28,11 @@ int main( int, char *[] )
     REGISTER_TESTGROUP( TestSystemMutex )
     REGISTER_TESTGROUP( TestTestTCPConnectionPool )
     REGISTER_TESTGROUP( TestTimer )
+    REGISTER_TESTGROUP( TestUnorderedMap )
 
-    UnitTestManager utm;
+    TestManager utm;
 
-    bool allPassed = utm.RunTests();
+    const bool allPassed = utm.RunTests();
 
     return allPassed ? 0 : -1;
 }

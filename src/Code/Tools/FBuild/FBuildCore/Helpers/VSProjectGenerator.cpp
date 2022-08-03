@@ -293,11 +293,20 @@ const AString & VSProjectGenerator::GenerateVCXProj( const AString & projectFile
         {
             WriteF( "  <PropertyGroup Condition=\"'$(Configuration)|$(Platform)'=='%s|%s'\">\n", cIt->m_Config.Get(), cIt->m_Platform.Get() );
 
-            WritePGItem( "NMakeBuildCommandLine",           cIt->m_ProjectBuildCommand );
-            WritePGItem( "NMakeReBuildCommandLine",         cIt->m_ProjectRebuildCommand );
-            WritePGItem( "NMakeCleanCommandLine",           cIt->m_ProjectCleanCommand );
-            WritePGItem( "NMakeOutput",                     cIt->m_Output );
+            if ( cIt->m_Keyword == "Linux" )
+            {
+                WritePGItem( "BuildCommandLine",                cIt->m_ProjectBuildCommand );
+                WritePGItem( "ReBuildCommandLine",              cIt->m_ProjectRebuildCommand );
+                WritePGItem( "CleanCommandLine",                cIt->m_ProjectCleanCommand );
+            }
+            else
+            {
+                WritePGItem( "NMakeBuildCommandLine",           cIt->m_ProjectBuildCommand );
+                WritePGItem( "NMakeReBuildCommandLine",         cIt->m_ProjectRebuildCommand );
+                WritePGItem( "NMakeCleanCommandLine",           cIt->m_ProjectCleanCommand );
+            }
 
+            WritePGItem( "NMakeOutput",                     cIt->m_Output );
             const ObjectListNode * oln = nullptr;
             if ( cIt->m_PreprocessorDefinitions.IsEmpty() || cIt->m_IncludeSearchPath.IsEmpty() )
             {
@@ -319,29 +328,46 @@ const AString & VSProjectGenerator::GenerateVCXProj( const AString & projectFile
                     WritePGItem( "NMakePreprocessorDefinitions", definesStr );
                 }
             }
+            StackArray< AString > includePaths;
+            StackArray< AString > forceIncludes;
+            if ( oln )
+            {
+                ProjectGeneratorBase::ExtractIncludePaths( oln->GetCompilerOptions(), includePaths, forceIncludes, false );
+            }
             if ( cIt->m_IncludeSearchPath.IsEmpty() == false )
             {
                 WritePGItem( "NMakeIncludeSearchPath",          cIt->m_IncludeSearchPath );
             }
-            else
+            else if ( oln )
             {
-                if ( oln )
+                for ( AString & include : includePaths )
                 {
-                    Array< AString > includePaths;
-                    ProjectGeneratorBase::ExtractIncludePaths( oln->GetCompilerOptions(), includePaths, false );
-                    for ( AString & include : includePaths )
-                    {
-                        ProjectGeneratorBase::GetRelativePath( projectBasePath, include, include );
-                        #if !defined( __WINDOWS__ )
-                            include.Replace( '/', '\\' ); // Convert to Windows-style slashes
-                        #endif
-                    }
-                    AStackString<> includePathsStr;
-                    ProjectGeneratorBase::ConcatIntellisenseOptions( includePaths, includePathsStr, nullptr, ";" );
-                    WritePGItem( "NMakeIncludeSearchPath", includePathsStr );
+                    ProjectGeneratorBase::GetRelativePath( projectBasePath, include, include );
+                    #if !defined( __WINDOWS__ )
+                        include.Replace( '/', '\\' ); // Convert to Windows-style slashes
+                    #endif
                 }
+                AStackString<> includePathsStr;
+                ProjectGeneratorBase::ConcatIntellisenseOptions( includePaths, includePathsStr, nullptr, ";" );
+                WritePGItem( "NMakeIncludeSearchPath", includePathsStr );
             }
-            WritePGItem( "NMakeForcedIncludes",             cIt->m_ForcedIncludes );
+            if ( cIt->m_ForcedIncludes.IsEmpty() == false )
+            {
+                WritePGItem( "NMakeForcedIncludes",             cIt->m_ForcedIncludes );
+            }
+            else if ( oln )
+            {
+                for ( AString & forceInclude : forceIncludes )
+                {
+                    ProjectGeneratorBase::GetRelativePath( projectBasePath, forceInclude, forceInclude );
+                    #if !defined( __WINDOWS__ )
+                        forceInclude.Replace( '/', '\\' ); // Convert to Windows-style slashes
+                    #endif
+                }
+                AStackString<> forceIncludePathsStr;
+                ProjectGeneratorBase::ConcatIntellisenseOptions( forceIncludes, forceIncludePathsStr, nullptr, ";" );
+                WritePGItem( "NMakeForcedIncludes", forceIncludePathsStr );
+            }
             WritePGItem( "NMakeAssemblySearchPath",         cIt->m_AssemblySearchPath );
             WritePGItem( "NMakeForcedUsingAssemblies",      cIt->m_ForcedUsingAssemblies );
             if ( cIt->m_AdditionalOptions.IsEmpty() == false )
@@ -625,7 +651,7 @@ void VSProjectGenerator::CanonicalizeFilePaths( const AString & projectBasePath 
         Array< VSProjectFilePair > uniqueFiles( m_Files.GetSize(), false );
         const VSProjectFilePair * prev = filePointers[ 0 ];
         uniqueFiles.Append( *filePointers[ 0 ] );
-        size_t numFiles = m_Files.GetSize();
+        const size_t numFiles = m_Files.GetSize();
         for ( size_t i=1; i<numFiles; ++i )
         {
             const VSProjectFilePair * current = filePointers[ i ];
