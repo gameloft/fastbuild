@@ -714,6 +714,29 @@ bool ObjectListNode::CreateDynamicObjectNode( NodeGraph & nodeGraph,
     // Create an ObjectNode to compile the above file
     // and depend on that
     Node * on = nodeGraph.FindNode( objFile );
+	//[GL] Add to fix Similar file name, different extension compilation issue of GL-Fastbuild-development
+	const ObjectNode* objNode = on != nullptr ? on->CastTo< ObjectNode >() : nullptr;
+    
+    if (objNode && objNode->GetSourceFile()->GetName().Compare(inputFileName) != 0)
+    {
+        const char * lastSlash = inputFileName.FindLast( NATIVE_SLASH );
+        lastSlash = lastSlash ? ( lastSlash + 1 ) : inputFileName.Get();
+
+        const char * lastDot = m_CompilerOutputKeepBaseExtension ? inputFileName.GetEnd() : inputFileName.FindLast( '.' );
+        lastDot = lastDot && ( lastDot > lastSlash ) ? lastDot : inputFileName.GetEnd();
+
+        const char * extension = inputFileName.FindLast( '.' );
+        uint32_t exthash = xxHash::Calc32(lastDot,strlen(extension));
+
+        AString dupFileEnd;
+        dupFileEnd.AppendFormat("_%u",exthash);
+
+        dupFileEnd += objNode->GetObjExtension();
+        objFile.Replace(objNode->GetObjExtension(),dupFileEnd.Get());
+        FLOG_BUILD_REASON("%s for source file %s\n",objFile.Get(),inputFileName.Get());
+        on = nodeGraph.FindNode( objFile );
+
+    }
     if ( on == nullptr )
     {
         // Handle Unity modification of flags

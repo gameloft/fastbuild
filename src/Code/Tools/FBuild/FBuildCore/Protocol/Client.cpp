@@ -73,6 +73,7 @@ Client::~Client()
 /*virtual*/ void Client::OnDisconnected( const ConnectionInfo * connection )
 {
     ASSERT( connection );
+	MutexHolder mh_userdata(m_ServerListMutex); //[GL] Add to fix crash when using distributed
     ServerState * ss = (ServerState *)connection->GetUserData();
     ASSERT( ss );
 
@@ -474,6 +475,9 @@ void Client::Process( const ConnectionInfo * connection, const Protocol::MsgRequ
     // output to signify remote start
     if ( FBuild::Get().GetOptions().m_ShowCommandSummary )
     {
+		#if defined(__WINDOWS__) //[GL] Add ansicolor output
+			ColorConsoleScope cyan(DARKCYAN_C);
+		#endif
         FLOG_OUTPUT( "-> Obj: %s <REMOTE: %s>\n", job->GetNode()->GetName().Get(), ss->m_RemoteName.Get() );
     }
     FLOG_MONITOR( "START_JOB %s \"%s\" \n", ss->m_RemoteName.Get(), job->GetNode()->GetName().Get() );
@@ -820,6 +824,10 @@ void Client::ProcessJobResultCommon( const ConnectionInfo * connection, bool isC
             failureOutput.AppendFormat( "FBuild: Error: Task failed on %u different workers\n", (uint32_t)SYSTEM_ERROR_ATTEMPT_COUNT );
         }
 
+		#if defined(__WINDOWS__)
+			//[GL] Add ansicolor output
+			ColorConsoleScope coloroutput(DARKRED_C);
+		#endif
         Node::DumpOutput( nullptr, failureOutput, nullptr );
     }
 

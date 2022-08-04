@@ -1205,7 +1205,7 @@ void TCPConnectionPool::DisableSigPipe( TCPSocket socket ) const
 void TCPConnectionPool::SetLargeBufferSizes( TCPSocket socket ) const
 {
     #if defined( __APPLE__ )
-        const uint32_t bufferSize = ( 5 * 1024 * 1024 ); // larger values fail on OS X
+        const uint32_t bufferSize = ( 3 * 1024 * 1024 ); // larger values fail on OS X //[GL] Add to fix A9 can not strip so
     #else
         const uint32_t bufferSize = ( 10 * 1024 * 1024 );
     #endif

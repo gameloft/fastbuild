@@ -36,7 +36,7 @@ REFLECT_NODE_BEGIN( LinkerNode, Node, MetaName( "LinkerOutput" ) + MetaFile() )
     REFLECT( m_LinkerType,                      "LinkerType",                   MetaOptional() )
     REFLECT( m_LinkerAllowResponseFile,         "LinkerAllowResponseFile",      MetaOptional() )
     REFLECT( m_LinkerForceResponseFile,         "LinkerForceResponseFile",      MetaOptional() )
-    REFLECT_ARRAY( m_Libraries,                 "Libraries",                    MetaFile() + MetaAllowNonFile() )
+    REFLECT_ARRAY(m_Libraries,					"Libraries",					MetaOptional() + MetaFile() + MetaAllowNonFile())//[GL] Add to fix for empty optional value Libraries
     REFLECT_ARRAY( m_Libraries2,                "Libraries2",                   MetaFile() + MetaAllowNonFile() + MetaOptional() )
     REFLECT_ARRAY( m_LinkerAssemblyResources,   "LinkerAssemblyResources",      MetaOptional() + MetaFile() + MetaAllowNonFile( Node::OBJECT_LIST_NODE ) )
     REFLECT( m_LinkerLinkObjects,               "LinkerLinkObjects",            MetaOptional() )
@@ -526,7 +526,7 @@ bool LinkerNode::BuildArgs( Args & fullArgs ) const
     }
 
     // orbis-ld.exe requires escaped slashes inside response file
-    if ( GetFlag( LINK_FLAG_ORBIS_LD ) )
+    if ( GetFlag( LINK_FLAG_ORBIS_LD ) || GetFlag( LINK_FLAG_CLANG) ) //[GL] Add LINK_FLAG_CLANG
     {
         fullArgs.SetEscapeSlashesInResponseFile();
     }
@@ -716,6 +716,10 @@ void LinkerNode::GetAssemblyResourceFiles( Args & fullArgs, const AString & pre,
         {
             flags |= LinkerNode::LINK_FLAG_CODEWARRIOR_LD;
         }
+		else if ((linkerName.EndsWithI("clang++.exe"))) //[GL] Add LINK_FLAG_CLANG
+		{
+			flags |= LinkerNode::LINK_FLAG_CLANG;
+		}
     }
     else
     {
@@ -1017,7 +1021,8 @@ ArgsResponseFileMode LinkerNode::GetResponseFileMode() const
              GetFlag( LINK_FLAG_SNC ) ||
              GetFlag( LINK_FLAG_ORBIS_LD ) ||
              GetFlag( LINK_FLAG_GREENHILLS_ELXR ) ||
-             GetFlag( LINK_FLAG_CODEWARRIOR_LD ) )
+             GetFlag( LINK_FLAG_CODEWARRIOR_LD ) ||
+			 GetFlag(LINK_FLAG_CLANG)) //[GL] Add LINK_FLAG_CLANG
         {
             return ArgsResponseFileMode::IF_NEEDED;
         }

@@ -278,7 +278,14 @@ bool CompilerNode::InitializeCompilerFamily( const BFFToken * iter, const Functi
             return true;
         }
 
-        // Auto-detect failed
+        //[GL] Add Handle Python as External Compiler
+		if ( compiler.EndsWithI( "python.exe" ) )
+	    {
+		    m_CompilerFamilyEnum = PYTHON;
+            return true;
+	    }
+		
+		// Auto-detect failed
         Error::Error_1500_CompilerDetectionFailed( iter, function, compiler );
         return false;
     }
