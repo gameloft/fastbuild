@@ -76,14 +76,15 @@ public:
         bool IsDiagnosticsColorAuto() const         { return ( ( m_Flags & FLAG_DIAGNOSTICS_COLOR_AUTO ) != 0 ); }
         bool IsWarningsAsErrorsClangGCC() const     { return ( ( m_Flags & FLAG_WARNINGS_AS_ERRORS_CLANGGCC ) != 0 ); }
         bool IsClangCl() const                      { return ( ( m_Flags & FLAG_CLANG_CL ) != 0 ); }
+        bool IsPython() const                       { return ((m_Flags & FLAG_PYTHON) != 0); }
 
         enum Flag : uint32_t
         {
             FLAG_CAN_BE_CACHED                  = 0x01,
             FLAG_CAN_BE_DISTRIBUTED             = 0x02,
             FLAG_USING_PCH                      = 0x04,
-		//[GL] Add Handle Python as External Compiler
-		FLAG_PYTHON				=	0x08,
+		    //[GL] Add Handle Python as External Compiler
+		    FLAG_PYTHON				            = 0x08,
             FLAG_GCC                            = 0x10,
             FLAG_MSVC                           = 0x20,
             FLAG_CREATING_PCH                   = 0x40,
@@ -144,6 +145,7 @@ public:
     bool IsUsingStaticAnalysisMSVC() const  { return m_CompilerFlags.IsUsingStaticAnalysisMSVC(); }
     bool IsOrbisWavePSSLC() const           { return m_CompilerFlags.IsOrbisWavePSSLC(); }
     bool IsWarningsAsErrorsClangGCC() const { return m_CompilerFlags.IsWarningsAsErrorsClangGCC(); }
+    bool IsPython() const                   { return m_CompilerFlags.IsPython(); }
 
     virtual void SaveRemote( IOStream & stream ) const override;
     static Node * LoadRemote( IOStream & stream );

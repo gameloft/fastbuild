@@ -950,7 +950,7 @@ bool ObjectNode::ProcessIncludesWithPreProcessor( Job * job )
         case CompilerNode::CompilerFamily::ORBIS_WAVE_PSSLC:flags.Set( CompilerFlags::FLAG_ORBIS_WAVE_PSSLC );  break;
         case CompilerNode::CompilerFamily::CSHARP:          ASSERT( false ); break; // Guarded in ObjectListNode::Initialize
 		//[GL] Add Handle Python as External Compiler
-		case CompilerNode::CompilerFamily::PYTHON:          flags |= FLAG_PYTHON;      		break;
+		case CompilerNode::CompilerFamily::PYTHON:          flags.Set( CompilerFlags::FLAG_PYTHON );  break;
     }
 
     // Source mappings are not currently forwarded so can only compiled locally
@@ -1099,10 +1099,7 @@ bool ObjectNode::ProcessIncludesWithPreProcessor( Job * job )
             }
         }
 		 //[GL] Add to don't cache PCH files when compiling with clang
-		bool isClang = flags & ( CompilerFlags::FLAG_CLANG );
-        bool isCreatingPCH =  flags & (CompilerFlags::FLAG_CREATING_PCH);
-       
-        if (isCreatingPCH && isClang)
+        if (flags.IsCreatingPCH() && flags.IsClang())
         { 
         	//it's clearer to write the condition like this 
         	//if we are creating the pch with clang ...dont cache it !
@@ -1337,7 +1334,8 @@ const AString & ObjectNode::GetCacheName( Job * job ) const
         }
 
         //[GL] Add to modify to relative path when Python is the compiler
-		if (GetFlag(FLAG_PYTHON))
+        CompilerFlags flags;
+		if (flags.IsPython())
 		{
 			AString data_path;
 			FBuild::Get().GetDataPath(data_path);
@@ -2540,7 +2538,7 @@ bool ObjectNode::CompileHelper::SpawnCompiler( Job * job,
     }
 	
 	//[GL] Add Handle Python as External Compiler
-	if ( objectNode->GetFlag( ObjectNode::FLAG_PYTHON ) )
+	if ( objectNode->IsPython())
 	{
 		if ( ( (uint32_t)result == 0xC0000135 ) ||
 			 ( (uint32_t)result == 0x1 ) )
