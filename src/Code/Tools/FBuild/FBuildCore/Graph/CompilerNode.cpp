@@ -32,6 +32,7 @@ REFLECT_NODE_BEGIN( CompilerNode, Node, MetaNone() )
     REFLECT( m_CompilerFamilyString,"CompilerFamily",       MetaOptional() )
     REFLECT_ARRAY( m_Environment,   "Environment",          MetaOptional() )
     REFLECT( m_UseLightCache,       "UseLightCache_Experimental", MetaOptional() )
+    REFLECT(m_SimpleCacheMode,      "SimpleCacheMode", MetaOptional()) //[GL] Add to allow data caching
     REFLECT( m_UseRelativePaths,    "UseRelativePaths_Experimental", MetaOptional() )
     REFLECT( m_SourceMapping,       "SourceMapping_Experimental", MetaOptional() )
 
@@ -55,6 +56,7 @@ CompilerNode::CompilerNode()
     , m_CompilerFamilyEnum( static_cast< uint8_t >( CUSTOM ) )
     , m_SimpleDistributionMode( false )
     , m_UseLightCache( false )
+    , m_SimpleCacheMode( false) //[GL] Add to allow data caching
     , m_UseRelativePaths( false )
     , m_EnvironmentString( nullptr )
 {

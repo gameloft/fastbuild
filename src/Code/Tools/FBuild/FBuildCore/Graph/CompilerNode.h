@@ -29,6 +29,7 @@ public:
 
     inline bool SimpleDistributionMode() const { return m_SimpleDistributionMode; }
     inline bool GetUseLightCache() const { return m_UseLightCache; }
+    inline bool SimpleCacheMode() const { return m_SimpleCacheMode; }//[GL] Add to allow data caching
     inline bool GetUseRelativePaths() const { return m_UseRelativePaths; }
     inline bool CanBeDistributed() const { return m_AllowDistribution; }
     inline bool CanUseResponseFile() const { return m_AllowResponseFile; }
@@ -86,6 +87,7 @@ private:
     uint8_t                 m_CompilerFamilyEnum;
     bool                    m_SimpleDistributionMode;
     bool                    m_UseLightCache;
+    bool                    m_SimpleCacheMode; //[GL] Add to allow data caching
     bool                    m_UseRelativePaths;
     ToolManifest            m_Manifest;
     Array< AString >        m_Environment;

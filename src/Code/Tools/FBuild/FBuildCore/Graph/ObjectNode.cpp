@@ -1130,6 +1130,13 @@ bool ObjectNode::ProcessIncludesWithPreProcessor( Job * job )
         flags.Set( CompilerFlags::FLAG_CAN_BE_CACHED );
     }
 
+    //[GL] Add to allow data caching
+    if ( compilerNode->CastTo< CompilerNode >()->SimpleCacheMode() )
+	{
+		// Can cache objects
+		flags.Set( CompilerFlags::FLAG_CAN_BE_CACHED );
+	}
+
     return flags;
 }
 
